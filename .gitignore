@@ -42,6 +42,9 @@ secrets.json
 # IDE и редакторы
 .vscode/
 .idea/
+*.iml
+*.iws
+*.ipr
 .vs/
 *.swp
 *.swo
