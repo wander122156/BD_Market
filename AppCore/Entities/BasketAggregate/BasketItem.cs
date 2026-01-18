@@ -1,4 +1,4 @@
-namespace AppCore.Entities.BasketAggregate;
+namespace Backend_BD.Entities.BasketAggregate;
 
 public class BasketItem : BaseEntity
 {

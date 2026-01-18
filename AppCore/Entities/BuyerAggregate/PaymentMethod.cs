@@ -1,4 +1,4 @@
-namespace AppCore.Entities.BuyerAggregate;
+namespace Backend_BD.Entities.BuyerAggregate;
 
 public class PaymentMethod : BaseEntity
 {

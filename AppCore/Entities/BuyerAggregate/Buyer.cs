@@ -1,6 +1,6 @@
-using AppCore.Interfaces;
+using Backend_BD.Interfaces;
 
-namespace AppCore.Entities.BuyerAggregate;
+namespace Backend_BD.Entities.BuyerAggregate;
 
 public class Buyer : BaseEntity, IAggregateRoot
 {
