@@ -1,0 +1,7 @@
+﻿services:
+  backend_bd:
+    image: backend_bd
+    build:
+      context: .
+      dockerfile: Backend_BD/Dockerfile
+
