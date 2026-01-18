@@ -1,5 +1,63 @@
+# Скомпилированные объекты и исполняемые файлы
+*.o
+*.obj
+*.exe
+*.out
+*.app
+*.dll
+*.so
+*.dylib
+*.a
+*.lib
+
+# Директории сборки
+build/
 bin/
-obj/
-/packages/
-riderModule.iml
-/_ReSharper.Caches/
+out/
+Debug/
+Release/
+x64/
+x86/
+
+# Кэш компилятора
+*.cache
+*.gch
+*.pch
+
+# Базы данных
+*.sqlite
+*.sqlite3
+*.db
+*.db-shm
+*.db-wal
+
+# Файлы конфигурации с секретами
+.env
+.env.local
+config.local.json
+secrets.json
+*.key
+*.pem
+
+# IDE и редакторы
+.vscode/
+.idea/
+.vs/
+*.swp
+*.swo
+*~
+
+# Системные файлы
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Логи
+*.log
+logs/
+
+# Зависимости (если используете)
+node_modules/
+packages/
+conan/
+vcpkg_installed/
