@@ -15,4 +15,4 @@ public class OrderCreatedHandler(ILogger<OrderCreatedHandler> logger, IEmailSend
             "Order Created",
             $"Order with id {domainEvent.Order.Id} was created.");
     }
-}
+} 
