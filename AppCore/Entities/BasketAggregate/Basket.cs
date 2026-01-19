@@ -4,13 +4,13 @@ namespace Backend_BD.Entities.BasketAggregate;
 
 public class Basket : BaseEntity, IAggregateRoot
 {
-    public int BuyerId { get ; private set; }
-    public List<BasketItem> _items { get; private set; } = [];
+    public string BuyerId { get ; private set; }
+    private readonly List<BasketItem> _items  = [];
     public IReadOnlyCollection<BasketItem> Items => _items.AsReadOnly();
     
     public int TotalItems => _items.Sum(i => i.Quantity);
     
-    public Basket(int buyerId)
+    public Basket(string buyerId)
     {
         BuyerId = buyerId;
     }
@@ -28,9 +28,13 @@ public class Basket : BaseEntity, IAggregateRoot
         BasketItem existingItem = Items.First(i => i.CatalogItemId == catalogItemId);
         existingItem.AddQuantity(quantity);
     }
-    
     public void RemoveEmptyItems()
     {
         _items.RemoveAll(i => i.Quantity == 0);
+    }
+    
+    public void SetNewBuyerId(string buyerId)
+    {
+        BuyerId = buyerId;
     }
 }
