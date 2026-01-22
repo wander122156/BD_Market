@@ -1,8 +1,9 @@
-using Backend_BD.Entities.OrderAggregate.Events;
-using Backend_BD.Interfaces;
+using Backend_BD.AppCore.Entities.OrderAggregate.Events;
+using Backend_BD.AppCore.Interfaces;
 using Mediator;
+using Microsoft.Extensions.Logging;
 
-namespace Backend_BD.Entities.OrderAggregate.Handlers;
+namespace Backend_BD.AppCore.Entities.OrderAggregate.Handlers;
 
 // Это обработчик доменного события (Domain Event Handler), который реагирует на создание заказа и отправляет email уведомление
 public class OrderCreatedHandler(ILogger<OrderCreatedHandler> logger, IEmailSender emailSender) : INotificationHandler<OrderCreatedEvent>

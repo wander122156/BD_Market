@@ -1,4 +1,4 @@
-namespace Backend_BD.Entities.OrderAggregate;
+namespace Backend_BD.AppCore.Entities.OrderAggregate;
 
 public class OrderItem : BaseEntity
 {

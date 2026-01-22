@@ -1,4 +1,4 @@
-namespace Backend_BD.Entities.OrderAggregate;
+namespace Backend_BD.AppCore.Entities.OrderAggregate;
 
 // Товар в каталоге может поменяться, поэтмоу делается и хранится снимок в OrderItem, а не ссылка
 public class CatalogItemOrdered // снимок Объект-значение (не сущность), можно сравнивать

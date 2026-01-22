@@ -1,4 +1,4 @@
-namespace Backend_BD.Entities;
+namespace Backend_BD.AppCore.Entities;
 
 // DRY (Don't Repeat Yourself)
 // Одинаковый парамерт для всех сущностей

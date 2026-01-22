@@ -1,6 +1,6 @@
-using Backend_BD.Interfaces;
+using Backend_BD.AppCore.Interfaces;
 
-namespace Backend_BD.Entities.BasketAggregate;
+namespace Backend_BD.AppCore.Entities.BasketAggregate;
 
 public class Basket : BaseEntity, IAggregateRoot
 {

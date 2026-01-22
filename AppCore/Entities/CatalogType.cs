@@ -1,6 +1,6 @@
-using Backend_BD.Interfaces;
+using Backend_BD.AppCore.Interfaces;
 
-namespace Backend_BD.Entities;
+namespace Backend_BD.AppCore.Entities;
 
 public class CatalogType : BaseEntity, IAggregateRoot
 {
