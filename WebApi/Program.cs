@@ -1,4 +1,5 @@
 using Backend_BD.Infrastructure.Data;
+using Backend_BD.WebApi.Extensions;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -13,6 +14,9 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
+
+// Заполнение базы
+await app.SeedDatabaseAsync();
 
 app.UseSwagger();
 app.UseSwaggerUI();
