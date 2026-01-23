@@ -13,10 +13,10 @@ public class CatalogBrandListEndpoint(
     public override void Configure()
     {
         Get("/api/catalog-brands");
-        AllowAnonymous();
+        AllowAnonymous(); // Не нужен токен авторизации, доступ для всех
         Description(d =>
             d.Produces<ListCatalogBrandsResponse>()
-                .WithTags("CatalogBrandEndpoints") );
+                .WithTags("CatalogBrandEndpoints") ); // Для Swagger
     }
 
     public override async Task HandleAsync(CancellationToken ct)

@@ -12,7 +12,8 @@ builder.Services.AddFastEndpoints();
 builder.Services.AddDbContext<CatalogContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("CatalogContext"))
 );
-
+ 
+// DI, Когда кто-то попросит IRepository<T>, создай и дай ему EfRepository<T>
 builder.Services.AddScoped(typeof(IRepository<>), typeof(EfRepository<>));
 
 builder.Services.SwaggerDocument(o =>
@@ -23,15 +24,14 @@ builder.Services.SwaggerDocument(o =>
         s.Version = "v1";
         s.Description = "API for Backend BD Market";
     };
-});
+}); 
 
 // builder.Services.AddControllers();
 // builder.Services.AddEndpointsApiExplorer();
 
 var app = builder.Build();
 
-// Заполнение базы
-await app.SeedDatabaseAsync();
+await app.SeedDatabaseAsync(); // Заполнение базы
 
 app.UseFastEndpoints();
 
