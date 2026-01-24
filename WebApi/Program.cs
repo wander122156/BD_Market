@@ -1,4 +1,6 @@
+using Backend_BD.AppCore;
 using Backend_BD.AppCore.Interfaces;
+using Backend_BD.AppCore.Services;
 using Backend_BD.Infrastructure.Data;
 using Backend_BD.WebApi.Extensions;
 using FastEndpoints;
@@ -15,6 +17,9 @@ builder.Services.AddDbContext<CatalogContext>(options =>
  
 // DI, Когда кто-то попросит IRepository<T>, создай и дай ему EfRepository<T>
 builder.Services.AddScoped(typeof(IRepository<>), typeof(EfRepository<>));
+
+var catalogSettings = builder.Configuration.Get<CatalogSettings>() ?? new CatalogSettings();
+builder.Services.AddSingleton<IUriComposer>(new UriComposer(catalogSettings));
 
 builder.Services.SwaggerDocument(o =>
 {

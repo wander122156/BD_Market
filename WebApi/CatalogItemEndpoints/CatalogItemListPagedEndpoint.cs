@@ -1,11 +1,13 @@
 using Backend_BD.AppCore.Entities;
 using Backend_BD.AppCore.Interfaces;
+using Backend_BD.AppCore.Specifications;
 using FastEndpoints;
 
 namespace Backend_BD.WebApi.CatalogItemEndpoints;
 
 public class CatalogItemListPagedEndpoint(
         IRepository<CatalogItem> catalogItemRepository,
+        IUriComposer uriComposer,
         ILogger<CatalogItemListPagedEndpoint> logger
     ) 
     : Endpoint<ListPagedCatalogItemRequest, ListPagedCatalogItemResponse>   
@@ -23,9 +25,16 @@ public class CatalogItemListPagedEndpoint(
     {
         ListPagedCatalogItemResponse response = new(request.CorrelationId());
         
-        int totalItems = await catalogItemRepository.CountAsync(ct);
+        CatalogFilterSpecification filterSpec = new(request.CatalogBrandId, request.CatalogTypeId);
+        int totalItems = await catalogItemRepository.CountAsync(filterSpec, ct);
         
-        List<CatalogItem> items = await catalogItemRepository.ListAsync(ct);
+        CatalogFilterPaginatedSpecification pagedSpec = new(
+            skip: request.PageIndex * request.PageSize,
+            take: request.PageSize,
+            brandId: request.CatalogBrandId,
+            typeId: request.CatalogTypeId); 
+        
+        List<CatalogItem> items = await catalogItemRepository.ListAsync(pagedSpec,ct);
         
         response.CatalogItems.AddRange(items.Select(i=> new CatalogItemDto
             {
@@ -37,6 +46,12 @@ public class CatalogItemListPagedEndpoint(
                 Price = i.Price,
                 PictureUri = i.PictureUri,
             } ));
+        
+        // генерация полного Url для картинок
+        foreach (CatalogItemDto item in response.CatalogItems)
+        {   
+            item.PictureUri = uriComposer.ComposePicUri(item.PictureUri);
+        }
         
         if (request.PageSize > 0)
         {
