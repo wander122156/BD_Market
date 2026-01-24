@@ -50,6 +50,10 @@
         "net9.0": {
           "targetAlias": "net9.0",
           "dependencies": {
+            "Ardalis.Result": {
+              "target": "Package",
+              "version": "[10.1.0, )"
+            },
             "Ardalis.SharedKernel": {
               "target": "Package",
               "version": "[4.1.0, )"

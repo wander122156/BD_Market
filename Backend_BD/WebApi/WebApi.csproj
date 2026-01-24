@@ -27,4 +27,19 @@
       <Folder Include="wwwroot\" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Compile Update="CatalogTypeEndpoints\CatalogTypeListEndpoint.ListCatalogTypesResponse.cs">
+        <DependentUpon>CatalogTypeListEndpoint.cs</DependentUpon>
+      </Compile>
+      <Compile Update="CatalogItemEndpoints\CatalogItemListPagedEndpoint.ListPagedCatalogItemRequest.cs">
+        <DependentUpon>CatalogItemListPagedEndpoint.cs</DependentUpon>
+      </Compile>
+      <Compile Update="CatalogItemEndpoints\CatalogItemListPagedEndpoint.ListPagedCatalogItemResponse.cs">
+        <DependentUpon>CatalogItemListPagedEndpoint.cs</DependentUpon>
+      </Compile>
+      <Compile Update="CatalogBrandEndpoints\CatalogBrandListEndpoint.ListCatalogBrandsResponse.cs">
+        <DependentUpon>CatalogBrandListEndpoint.cs</DependentUpon>
+      </Compile>
+    </ItemGroup>
+
 </Project>
