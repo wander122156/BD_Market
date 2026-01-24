@@ -23,7 +23,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="CatalogItemEndpoints\" />
       <Folder Include="Middleware\" />
     </ItemGroup>
 
