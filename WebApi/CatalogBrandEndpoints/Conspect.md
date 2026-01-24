@@ -26,7 +26,6 @@ public class CatalogBrandListEndpoint(
 ```
  public override async Task HandleAsync(CancellationToken ct)
     {
-        // Создаём всё вручную
         var connectionString = "Server=localhost;Database=Catalog;...";
         var options = new DbContextOptionsBuilder<CatalogContext>()
             .UseSqlServer(connectionString)
@@ -71,8 +70,8 @@ builder.Services.AddScoped(typeof(IRepository<>), typeof(EfRepository<>));
 
 Request 1:
 - CatalogBrandEndpoint получает EfRepository#1
-- CatalogTypeEndpoint получает EfRepository#1 (тот же!)
+- CatalogTypeEndpoint получает EfRepository#1 (тот же)
 - Запрос завершён → EfRepository#1.Dispose()
 
 Request 2:
-- CatalogBrandEndpoint получает EfRepository#2 (новый!)
+- CatalogBrandEndpoint получает EfRepository#2 (новый)

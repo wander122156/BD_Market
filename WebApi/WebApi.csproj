@@ -24,7 +24,6 @@
 
     <ItemGroup>
       <Folder Include="CatalogItemEndpoints\" />
-      <Folder Include="CatalogTypeEndpoints\" />
       <Folder Include="Middleware\" />
     </ItemGroup>
 

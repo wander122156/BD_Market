@@ -31,7 +31,7 @@ public class CatalogBrandListEndpoint(
         List<CatalogBrand> items = await catalogBrandRepository.ListAsync(ct);
         
         logger.LogInformation(
-            "Получено {Count} брендов из БД. CorrelationId: {CorrelationId}", 
+            "Получено {Count} брендов из БД. CorrelationId: {CorrelationId}",
             items.Count, 
             correlationId);
         
