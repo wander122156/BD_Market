@@ -1,7 +1,9 @@
+# Старые проекты и примеры
 Backend(Old)/
 Example(eShopOnWeb)/
 
-# Скомпилированные объекты и исполняемые файлы
+## ===== .NET =====
+# Скомпилированные объекты
 *.o
 *.obj
 *.exe
@@ -14,56 +16,148 @@ Example(eShopOnWeb)/
 *.lib
 
 # Директории сборки
-build/
 bin/
+obj/
+build/
 out/
 Debug/
 Release/
 x64/
 x86/
+.vs/
+.vscode/
 
-# Кэш компилятора
+# Кэш компилятора и метаданные
 *.cache
 *.gch
 *.pch
+*.pdb
 
-# Базы данных
+## ===== Entity Framework =====
+# Migrations не коммитим если их переделываешь часто
+# Но обычно миграции коммитим!
+# migrations/ # Раскомментируй если не хочешь коммитить миграции
+
+## ===== Базы данных =====
 *.sqlite
 *.sqlite3
 *.db
 *.db-shm
 *.db-wal
+postgres_data/  # Docker volume для PostgreSQL
 
-# Файлы конфигурации с секретами
+## ===== Конфигурация и секреты =====
+appsettings.Development.json
+appsettings.*.json
+!appsettings.json
 .env
 .env.local
+.env.*.local
 config.local.json
 secrets.json
 *.key
 *.pem
+*.pfx
 
-# IDE и редакторы
-.vscode/
+## ===== JetBrains Rider =====
 .idea/
+.idea_modules/
 *.iml
 *.iws
 *.ipr
-.vs/
 *.swp
 *.swo
 *~
+.idea/caches/
+.idea/misc.xml
+.idea/modules.xml
+.idea/workspace.xml
+rider.project.model.nuget.info
+.idea/shelf/
+.idea/vcs.xml
+*.DotSettings.user
 
-# Системные файлы
+## ===== Visual Studio Code =====
+.vscode/
+.vscode/settings.json
+.vscode/launch.json
+.vscode/extensions.json
+*.code-workspace
+
+## ===== Visual Studio =====
+.vs/
+*.user
+*.suo
+*.sln.iml
+.localhistory/
+.ssms_suo
+
+## ===== Системные файлы =====
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
 desktop.ini
+*.swp
+.AppleDouble
+.LSOverride
 
-# Логи
+## ===== Логи =====
 *.log
 logs/
+log/
 
-# Зависимости (если используете)
+## ===== Зависимости и пакеты =====
 node_modules/
 packages/
+.nuget/
+.m2/
 conan/
 vcpkg_installed/
+
+## ===== Временные файлы =====
+*.tmp
+*.temp
+*.bak
+*.backup
+*.swp
+*~
+.#*
+
+## ===== Docker =====
+.dockerignore
+docker-compose.override.yml
+
+## ===== NuGet =====
+*.nupkg
+*.snupkg
+.nuget/
+
+## ===== Прочее =====
+.venv/
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+coverage/
+.coverage
+htmlcov/
+
+# Большие файлы
+*.iso
+*.zip
+*.rar
+*.7z
+*.tar.gz
+
+# IDE временные файлы
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+.sublime-project

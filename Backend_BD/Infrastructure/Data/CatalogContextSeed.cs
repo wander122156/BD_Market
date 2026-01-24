@@ -13,11 +13,8 @@ public class CatalogContextSeed
         var retryForAvailability = retry;
         try
         {
-            if (catalogContext.Database.IsSqlServer())
-            {
-                // автоматически применяет все неприменённые миграции
-                catalogContext.Database.Migrate();
-            }
+            // применяет миграции для любой бд
+            catalogContext.Database.Migrate();
 
             if (!await catalogContext.CatalogBrands.AnyAsync()) // проверяет, есть ли хотя бы одна запись в таблице
             {

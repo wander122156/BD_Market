@@ -13,7 +13,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddFastEndpoints();
 
 builder.Services.AddDbContext<CatalogContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("CatalogContext"))
+    options.UseNpgsql(builder.Configuration.GetConnectionString("CatalogContext"))
 );
  
 // DI, Когда кто-то попросит IRepository<T>, создай и дай ему EfRepository<T>

@@ -1,13 +1,28 @@
-﻿services:
-  backend_bd:
-    image: backend_bd
-    build:
-      context: .
-      dockerfile: Backend_BD/Dockerfile
+﻿version: '3.8'
 
-  infrastructure:
-    image: infrastructure
-    build:
-      context: .
-      dockerfile: Infrastructure/Dockerfile
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: bd_market_postgres
+    environment:
+      POSTGRES_DB: CatalogDb
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin123
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - bd_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
+volumes:
+  postgres_data:
+
+networks:
+  bd_network:
+    driver: bridge
