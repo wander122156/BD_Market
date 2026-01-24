@@ -24,6 +24,20 @@ builder.Services.AddScoped(typeof(IAppLogger<>), typeof(LoggerAdapter<>));
 var catalogSettings = builder.Configuration.Get<CatalogSettings>() ?? new CatalogSettings();
 builder.Services.AddSingleton<IUriComposer>(new UriComposer(catalogSettings));
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend", policy =>
+    {
+        policy.WithOrigins(
+                "http://localhost:5173",
+                "http://127.0.0.1:5173"
+            )
+            .AllowAnyMethod()
+            .AllowAnyHeader()
+            .AllowCredentials();
+    });
+});
+
 builder.Services.SwaggerDocument(o =>
 {
     o.DocumentSettings = s =>
@@ -35,6 +49,8 @@ builder.Services.SwaggerDocument(o =>
 }); 
 
 var app = builder.Build();
+
+app.UseCors("AllowFrontend");
 
 app.UseStaticFiles(); 
 await app.SeedDatabaseAsync(); // Заполнение базы
