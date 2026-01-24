@@ -85,15 +85,18 @@ export default function Home() {
             >
               All
             </button>
-            {categories.filter(cat => cat !== 'All').map((category) => (
-              <button
-                key={category}
-                className={`category-item ${selectedCategory === category ? 'active' : ''}`}
-                onClick={() => setSelectedCategory(category)}
-              >
-                {category}
-              </button>
-            ))}
+            {categories
+                .filter(cat => cat && typeof cat === 'object' && cat.name !== 'All')
+                .map((category) => (
+                    <button
+                        key={category.id}
+                        className={`category-item ${selectedCategory === category.id ? 'active' : ''}`}
+                        onClick={() => setSelectedCategory(category.id)}
+                    >
+                      {category.name}
+                    </button>
+                ))
+            }
           </div>
 
           {/* Filters */}

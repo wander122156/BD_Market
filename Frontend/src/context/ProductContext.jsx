@@ -1,5 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react';
-import { products as initialProducts, categories } from '../data/products';
+import {createContext, useContext, useState, useEffect, useCallback} from 'react';
 
 const ProductContext = createContext();
 
@@ -13,25 +12,81 @@ export const useProducts = () => {
 
 export const ProductProvider = ({ children }) => {
   const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Load products from localStorage on mount, or use initial products
-  useEffect(() => {
-    const savedProducts = localStorage.getItem('products');
-    if (savedProducts) {
-      setProducts(JSON.parse(savedProducts));
-    } else {
-      // Initialize with default products if no saved products
-      setProducts(initialProducts);
-      localStorage.setItem('products', JSON.stringify(initialProducts));
+  const API_BASE_URL = 'http://localhost:5064/api';
+
+  const fetchProducts = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/catalog-items`);
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      console.log('Backend response:', data);
+
+      // Backend может вернуть: data.catalogItems или data.CatalogItems
+      let items = data.catalogItems || data.CatalogItems || [];
+
+      if (!Array.isArray(items)) {
+        console.error('Items is not an array:', items);
+        items = [];
+      }
+
+      console.log('Raw items:', items);
+
+      const mappedProducts = items.map(item => ({
+        id: item.id,
+        name: item.name || 'Unknown Product',
+        description: item.description || 'No description available',
+        price: parseFloat(item.price) || 0,  // ← Конвертируем в число
+        originalPrice: parseFloat(item.price) * 1.2 || 0,  // ← Добавляем 20%
+        image: item.pictureUri
+            ? `http://localhost:5064${item.pictureUri}`
+            : null,
+        category: item.catalogTypeId || 1,
+        categoryId: item.catalogTypeId,
+        brandId: item.catalogBrandId,
+        rating: 4.0,
+        reviews: 0,
+        inStock: true,
+        deliveryTime: '2-4 hours'
+      }));
+
+      console.log('Mapped products:', mappedProducts);
+      setProducts(mappedProducts);
+
+    } catch (err) {
+      console.error('Error fetching products:', err);
+      setError(err.message);
+      setProducts([]);
+    } finally {
+      setLoading(false);
     }
   }, []);
 
-  // Save products to localStorage whenever they change
-  useEffect(() => {
-    if (products.length > 0) {
-      localStorage.setItem('products', JSON.stringify(products));
+  const fetchCategories = useCallback(async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/catalog-types`);
+      const data = await response.json();
+      setCategories(data.catalogTypes || data.CatalogTypes || []);
+    } catch (err) {
+      console.error('Error fetching categories:', err);
     }
-  }, [products]);
+  }, []);
+
+  useEffect(() => {
+    fetchProducts();
+    fetchCategories();
+  }, [fetchProducts, fetchCategories]);
 
   const addProduct = (productData) => {
     const newProduct = {
@@ -48,7 +103,7 @@ export const ProductProvider = ({ children }) => {
 
   const updateProduct = (id, updatedData) => {
     setProducts(products.map(product =>
-      product.id === id ? { ...product, ...updatedData } : product
+        product.id === id ? { ...product, ...updatedData } : product
     ));
   };
 
@@ -60,18 +115,16 @@ export const ProductProvider = ({ children }) => {
     return products.find(product => product.id === parseInt(id));
   };
 
-  const getCategories = () => {
-    return categories;
-  };
-
   const value = {
     products,
     categories,
+    loading,
+    error,
     addProduct,
     updateProduct,
     deleteProduct,
     getProductById,
-    getCategories,
+    fetchProducts, // Чтобы можно было перезагрузить
   };
 
   return <ProductContext.Provider value={value}>{children}</ProductContext.Provider>;
