@@ -40,6 +40,9 @@
       <Compile Update="CatalogBrandEndpoints\CatalogBrandListEndpoint.ListCatalogBrandsResponse.cs">
         <DependentUpon>CatalogBrandListEndpoint.cs</DependentUpon>
       </Compile>
+      <Compile Update="BasketEndpoints\GetBasketEndpoint.GetBasketResponse.cs">
+        <DependentUpon>GetBasketEndpoint.cs</DependentUpon>
+      </Compile>
     </ItemGroup>
 
 </Project>
