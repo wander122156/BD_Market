@@ -1,0 +1,147 @@
+.auth-container {
+  min-height: calc(100vh - 80px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  background-color: var(--bg-light);
+}
+
+.auth-card {
+  background-color: var(--bg-color);
+  border-radius: 12px;
+  padding: 40px;
+  box-shadow: var(--shadow-lg);
+  width: 100%;
+  max-width: 450px;
+}
+
+.auth-card h1 {
+  font-size: 32px;
+  font-weight: 700;
+  margin-bottom: 30px;
+  text-align: center;
+  color: var(--text-color);
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-group label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.form-group input {
+  padding: 12px 16px;
+  font-size: 16px;
+  border: 2px solid var(--border-color);
+  border-radius: 6px;
+  transition: border-color 0.2s;
+}
+
+.form-group input:focus {
+  border-color: var(--primary-color);
+  outline: none;
+}
+
+.form-group input.error {
+  border-color: var(--error-color);
+}
+
+.error-message {
+  font-size: 12px;
+  color: var(--error-color);
+  margin-top: -4px;
+}
+
+.error-banner {
+  padding: 12px;
+  background-color: #fef2f2;
+  border: 1px solid var(--error-color);
+  border-radius: 6px;
+  color: var(--error-color);
+  font-size: 14px;
+  text-align: center;
+}
+
+.password-hints {
+  margin-top: 4px;
+}
+
+.password-hints small {
+  font-size: 12px;
+  color: var(--text-light);
+}
+
+.auth-button {
+  padding: 14px 24px;
+  background-color: var(--primary-color);
+  color: white;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  transition: background-color 0.2s;
+  margin-top: 10px;
+}
+
+.auth-button:hover:not(:disabled) {
+  background-color: var(--primary-hover);
+}
+
+.auth-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.admin-hint {
+  padding: 10px;
+  background-color: var(--bg-light);
+  border-radius: 6px;
+  text-align: center;
+  margin-top: -10px;
+}
+
+.admin-hint small {
+  font-size: 12px;
+  color: var(--text-light);
+  font-style: italic;
+}
+
+.auth-link {
+  text-align: center;
+  margin-top: 24px;
+  font-size: 14px;
+  color: var(--text-light);
+}
+
+.auth-link a {
+  color: var(--primary-color);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.auth-link a:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 768px) {
+  .auth-card {
+    padding: 30px 20px;
+  }
+
+  .auth-card h1 {
+    font-size: 24px;
+  }
+}
+
