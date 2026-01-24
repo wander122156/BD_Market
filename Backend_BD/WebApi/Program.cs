@@ -26,19 +26,15 @@ builder.Services.AddSingleton<IUriComposer>(new UriComposer(catalogSettings));
 
 builder.Services.AddCors(options =>
 {
-    options.AddDefaultPolicy(policy =>
+    options.AddPolicy("AllowFrontend", policy =>
     {
-        // В Development разрешаем любой origin (в т.ч. другой порт Vite, IP и т.п.)
-        if (builder.Environment.IsDevelopment())
-        {
-            policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
-        }
-        else
-        {
-            policy.WithOrigins("http://localhost:5173", "http://127.0.0.1:5173")
-                .AllowAnyHeader()
-                .AllowAnyMethod();
-        }
+        policy.WithOrigins(
+                "http://localhost:5173",
+                "http://127.0.0.1:5173"
+            )
+            .AllowAnyMethod()
+            .AllowAnyHeader()
+            .AllowCredentials();
     });
 });
 
@@ -54,7 +50,8 @@ builder.Services.SwaggerDocument(o =>
 
 var app = builder.Build();
 
-app.UseCors();
+app.UseCors("AllowFrontend");
+
 app.UseStaticFiles(); 
 await app.SeedDatabaseAsync(); // Заполнение базы
 

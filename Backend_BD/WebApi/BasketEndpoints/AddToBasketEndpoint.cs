@@ -18,29 +18,36 @@ public class AddToBasketEndpoint(
             .WithTags("BasketEndpoints"));
     }
 
-    public override async Task HandleAsync(AddToBasketRequest req, CancellationToken ct)
+    public override async Task HandleAsync(AddToBasketRequest request, CancellationToken ct)
     {
-        AddToBasketResponse response = new();
-        Guid correlationId = response.CorrelationId();
+        Guid correlationId = request.CorrelationId();
         string username = User.Identity?.Name ?? "anonymous";
 
         logger.LogInformation(
             "Добавление товара {ItemId} в корзину. Username: {Username}, CorrelationId: {CorrelationId}",
-            req.CatalogItemId, username, correlationId);
+            request.CatalogItemId, username, correlationId);
 
         var basket = await basketService.AddItemToBasket(
             username,
-            req.CatalogItemId,
-            req.Price,
-            req.Quantity);
+            request.CatalogItemId,
+            request.Price,
+            request.Quantity);
 
-        response.BasketId = basket.Id;
-        response.TotalItems = basket.Items.Sum(i => i.Quantity);
-        response.Total = basket.Items.Sum(i => i.UnitPrice * i.Quantity);
-
-        logger.LogInformation(
-            "Товар добавлен. BasketId: {BasketId}, Всего товаров: {TotalItems}, CorrelationId: {CorrelationId}",
-            response.BasketId, response.TotalItems, correlationId);
+        AddToBasketResponse response = new(correlationId)
+        {
+            Basket = new BasketDto
+            {
+                Id = basket.Id,
+                BuyerId = basket.BuyerId,
+                Items = basket.Items.Select(item => new BasketItemDto
+                {
+                    Id = item.Id,
+                    CatalogItemId = item.CatalogItemId,
+                    UnitPrice = item.UnitPrice,
+                    Quantity = item.Quantity,
+                }).ToList()
+            }
+        };
 
         await Send.OkAsync(response, ct);
     }

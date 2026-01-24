@@ -1,6 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { fetchCatalogItems, fetchCatalogTypes } from '../api/catalogApi';
-import { API_BASE } from '../api/config';
+import {createContext, useContext, useState, useEffect, useCallback} from 'react';
 
 const ProductContext = createContext();
 
@@ -12,57 +10,83 @@ export const useProducts = () => {
   return context;
 };
 
-function mapCatalogItemToProduct(dto, typeMap) {
-  const pictureUri = dto.pictureUri || '';
-  const image = pictureUri.startsWith('http') ? pictureUri : `${API_BASE}${pictureUri}`;
-  const category = (typeMap && typeMap[dto.catalogTypeId]) || 'General';
-  return {
-    id: dto.id,
-    name: dto.name,
-    description: dto.description || '',
-    price: Number(dto.price),
-    originalPrice: Number(dto.price),
-    image,
-    category,
-    catalogTypeId: dto.catalogTypeId,
-    catalogBrandId: dto.catalogBrandId,
-    rating: 4,
-    reviews: 0,
-    inStock: true,
-    deliveryTime: '2-4 hours',
-  };
-}
-
 export const ProductProvider = ({ children }) => {
   const [products, setProducts] = useState([]);
-  const [categories, setCategories] = useState(['All']);
-  const [productsLoading, setProductsLoading] = useState(true);
-  const [productsError, setProductsError] = useState(null);
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const loadProducts = useCallback(async () => {
-    setProductsLoading(true);
-    setProductsError(null);
+  const API_BASE_URL = 'http://localhost:5064/api';
+
+  const fetchProducts = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+
     try {
-      const [catalogRes, typesRes] = await Promise.all([
-        fetchCatalogItems({ pageSize: 500, pageIndex: 0 }),
-        fetchCatalogTypes(),
-      ]);
-      const typeMap = {};
-      (typesRes.catalogTypes || []).forEach((t) => { typeMap[t.id] = t.name; });
-      setCategories(['All', ...(typesRes.catalogTypes || []).map((t) => t.name)]);
-      const list = (catalogRes.catalogItems || []).map((d) => mapCatalogItemToProduct(d, typeMap));
-      setProducts(list);
-    } catch (e) {
-      setProductsError(e.message || 'Ошибка загрузки каталога');
+      const response = await fetch(`${API_BASE_URL}/catalog-items`);
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      console.log('Backend response:', data);
+
+      // Backend может вернуть: data.catalogItems или data.CatalogItems
+      let items = data.catalogItems || data.CatalogItems || [];
+
+      if (!Array.isArray(items)) {
+        console.error('Items is not an array:', items);
+        items = [];
+      }
+
+      console.log('Raw items:', items);
+
+      const mappedProducts = items.map(item => ({
+        id: item.id,
+        name: item.name || 'Unknown Product',
+        description: item.description || 'No description available',
+        price: parseFloat(item.price) || 0,  // ← Конвертируем в число
+        originalPrice: parseFloat(item.price) * 1.2 || 0,  // ← Добавляем 20%
+        image: item.pictureUri
+            ? `http://localhost:5064${item.pictureUri}`
+            : null,
+        category: item.catalogTypeId || 1,
+        categoryId: item.catalogTypeId,
+        brandId: item.catalogBrandId,
+        rating: 4.0,
+        reviews: 0,
+        inStock: true,
+        deliveryTime: '2-4 hours'
+      }));
+
+      console.log('Mapped products:', mappedProducts);
+      setProducts(mappedProducts);
+
+    } catch (err) {
+      console.error('Error fetching products:', err);
+      setError(err.message);
       setProducts([]);
     } finally {
-      setProductsLoading(false);
+      setLoading(false);
+    }
+  }, []);
+
+  const fetchCategories = useCallback(async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/catalog-types`);
+      const data = await response.json();
+      setCategories(data.catalogTypes || data.CatalogTypes || []);
+    } catch (err) {
+      console.error('Error fetching categories:', err);
     }
   }, []);
 
   useEffect(() => {
-    loadProducts();
-  }, [loadProducts]);
+    fetchProducts();
+    fetchCategories();
+  }, [fetchProducts, fetchCategories]);
 
   const addProduct = (productData) => {
     const newProduct = {
@@ -71,40 +95,36 @@ export const ProductProvider = ({ children }) => {
       rating: productData.rating || 4.0,
       reviews: productData.reviews || 0,
       inStock: productData.inStock !== undefined ? productData.inStock : true,
-      deliveryTime: productData.deliveryTime || '2-4 hours',
+      deliveryTime: productData.deliveryTime || '2-4 hours'
     };
-    setProducts((prev) => [...prev, newProduct]);
+    setProducts([...products, newProduct]);
     return newProduct;
   };
 
   const updateProduct = (id, updatedData) => {
-    setProducts((prev) =>
-      prev.map((p) => (p.id === Number(id) ? { ...p, ...updatedData } : p))
-    );
+    setProducts(products.map(product =>
+        product.id === id ? { ...product, ...updatedData } : product
+    ));
   };
 
   const deleteProduct = (id) => {
-    setProducts((prev) => prev.filter((p) => p.id !== Number(id)));
+    setProducts(products.filter(product => product.id !== id));
   };
 
   const getProductById = (id) => {
-    const num = Number(id);
-    return products.find((p) => p.id === num);
+    return products.find(product => product.id === parseInt(id));
   };
-
-  const getCategories = () => categories;
 
   const value = {
     products,
     categories,
-    productsLoading,
-    productsError,
-    refetchProducts: loadProducts,
+    loading,
+    error,
     addProduct,
     updateProduct,
     deleteProduct,
     getProductById,
-    getCategories,
+    fetchProducts, // Чтобы можно было перезагрузить
   };
 
   return <ProductContext.Provider value={value}>{children}</ProductContext.Provider>;
