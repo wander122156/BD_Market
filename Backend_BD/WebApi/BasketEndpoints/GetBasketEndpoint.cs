@@ -1,22 +1,25 @@
 using Backend_BD.AppCore.Entities.BasketAggregate;
 using Backend_BD.AppCore.Interfaces;
 using Backend_BD.AppCore.Specifications;
+using Backend_BD.WebApi.Services;
 using FastEndpoints;
 
 namespace Backend_BD.WebApi.BasketEndpoints;
 
 public class GetBasketEndpoint(
     IRepository<Basket> basketRepository, // Репозиторий, а не сервис, т.к. для чтения
-    ILogger<GetBasketEndpoint> logger)
-
-: EndpointWithoutRequest<GetBasketResponse>
+    IBasketViewModelService basketViewModelService,
+    ILogger<GetBasketEndpoint> logger
+    )
+    : EndpointWithoutRequest<GetBasketResponse>
 {
     public override void Configure()
     {
         Get("/api/basket");
-        AllowAnonymous();
+        AllowAnonymous(); // Options(x => x.RequireAuthorization())
         Description(d => d
             .Produces<GetBasketResponse>()
+            .Produces(404)
             .WithTags("BasketEndpoints"));
     }
     
@@ -38,20 +41,17 @@ public class GetBasketEndpoint(
             await Send.NotFoundAsync(ct);
             return;
         }
+        
+        var basketDto = await basketViewModelService.MapBasketToDto(basket);
 
         response.BasketId = basket.Id;
         response.BuyerId = basket.BuyerId;
-        response.Items.AddRange(basket.Items.Select(i => new 
-            BasketItemDto
-        {
-            Id = i.Id,
-            CatalogItemId = i.CatalogItemId,
-            UnitPrice = i.UnitPrice,
-            Quantity = i.Quantity
-        }));
-        response.Total = basket.Items.Sum(i => i.UnitPrice * i.Quantity);
+        response.Items.AddRange(basketDto.Items);
+        
+        logger.LogInformation(
+            "Возвращена корзина с {Count} товарами. Total: {Total:C}. CorrelationId: {CorrelationId}",
+            response.Items.Count, response.Total, response.CorrelationId);
 
         await Send.OkAsync(response, ct);
-
     }
 }

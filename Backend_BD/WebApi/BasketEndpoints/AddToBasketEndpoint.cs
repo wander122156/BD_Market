@@ -11,7 +11,7 @@ public class AddToBasketEndpoint(
 {
     public override void Configure()
     {
-        Post("/api/basket/items");
+        Post("/api/basket/{buyerId}/items");
         AllowAnonymous();
         Description(d => d
             .Produces<AddToBasketResponse>()
@@ -20,15 +20,17 @@ public class AddToBasketEndpoint(
 
     public override async Task HandleAsync(AddToBasketRequest request, CancellationToken ct)
     {
+        string buyerId = Route<string>("buyerId");
+        
         Guid correlationId = request.CorrelationId();
-        string username = User.Identity?.Name ?? "anonymous";
+        // string username = User.Identity?.Name ?? "anonymous";
 
         logger.LogInformation(
             "Добавление товара {ItemId} в корзину. Username: {Username}, CorrelationId: {CorrelationId}",
-            request.CatalogItemId, username, correlationId);
+            request.CatalogItemId, buyerId, correlationId);
 
         var basket = await basketService.AddItemToBasket(
-            username,
+            buyerId,
             request.CatalogItemId,
             request.Price,
             request.Quantity);
