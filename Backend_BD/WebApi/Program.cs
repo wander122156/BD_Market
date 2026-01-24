@@ -2,6 +2,7 @@ using Backend_BD.AppCore;
 using Backend_BD.AppCore.Interfaces;
 using Backend_BD.AppCore.Services;
 using Backend_BD.Infrastructure.Data;
+using Backend_BD.Infrastructure.Logging;
 using Backend_BD.WebApi.Extensions;
 using FastEndpoints;
 using FastEndpoints.Swagger;
@@ -17,6 +18,8 @@ builder.Services.AddDbContext<CatalogContext>(options =>
  
 // DI, Когда кто-то попросит IRepository<T>, создай и дай ему EfRepository<T>
 builder.Services.AddScoped(typeof(IRepository<>), typeof(EfRepository<>));
+builder.Services.AddScoped<IBasketService, BasketService>();
+builder.Services.AddScoped(typeof(IAppLogger<>), typeof(LoggerAdapter<>));
 
 var catalogSettings = builder.Configuration.Get<CatalogSettings>() ?? new CatalogSettings();
 builder.Services.AddSingleton<IUriComposer>(new UriComposer(catalogSettings));
