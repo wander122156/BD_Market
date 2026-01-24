@@ -31,11 +31,9 @@ builder.Services.SwaggerDocument(o =>
     };
 }); 
 
-// builder.Services.AddControllers();
-// builder.Services.AddEndpointsApiExplorer();
-
 var app = builder.Build();
 
+app.UseStaticFiles(); 
 await app.SeedDatabaseAsync(); // Заполнение базы
 
 app.UseFastEndpoints();
@@ -43,7 +41,6 @@ app.UseFastEndpoints();
 app.UseSwaggerGen();
 
 // app.UseAuthorization();
-// app.MapControllers();
 
 app.MapGet("/", () => new
 {
