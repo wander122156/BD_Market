@@ -6,8 +6,8 @@ export default function ProductCard({ product }) {
   const { addToCart, cartItems, removeFromCart, updateQuantity } = useCart();
   const discount = Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100);
   
-  // Check if product is in cart
-  const cartItem = cartItems.find(item => item.id === product.id);
+  // Check if product is in cart (catalogItemId — id товара в каталоге)
+  const cartItem = cartItems.find((item) => item.catalogItemId === product.id);
   const isInCart = !!cartItem;
   const quantityInCart = cartItem?.quantity || 0;
 
@@ -20,14 +20,14 @@ export default function ProductCard({ product }) {
   const handleRemoveFromCart = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    removeFromCart(product.id);
+    removeFromCart(product.id); // catalog item id
   };
 
   const handleIncreaseQuantity = (e) => {
     e.preventDefault();
     e.stopPropagation();
     if (isInCart) {
-      updateQuantity(product.id, quantityInCart + 1);
+      updateQuantity(product.id, quantityInCart + 1); // catalog item id
     } else {
       addToCart(product);
     }
@@ -37,7 +37,7 @@ export default function ProductCard({ product }) {
     e.preventDefault();
     e.stopPropagation();
     if (quantityInCart > 1) {
-      updateQuantity(product.id, quantityInCart - 1);
+      updateQuantity(product.id, quantityInCart - 1); // catalog item id
     } else {
       removeFromCart(product.id);
     }

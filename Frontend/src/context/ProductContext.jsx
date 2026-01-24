@@ -1,5 +1,6 @@
-import { createContext, useContext, useState, useEffect } from 'react';
-import { products as initialProducts, categories } from '../data/products';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { fetchCatalogItems, fetchCatalogTypes } from '../api/catalogApi';
+import { API_BASE } from '../api/config';
 
 const ProductContext = createContext();
 
@@ -11,27 +12,57 @@ export const useProducts = () => {
   return context;
 };
 
+function mapCatalogItemToProduct(dto, typeMap) {
+  const pictureUri = dto.pictureUri || '';
+  const image = pictureUri.startsWith('http') ? pictureUri : `${API_BASE}${pictureUri}`;
+  const category = (typeMap && typeMap[dto.catalogTypeId]) || 'General';
+  return {
+    id: dto.id,
+    name: dto.name,
+    description: dto.description || '',
+    price: Number(dto.price),
+    originalPrice: Number(dto.price),
+    image,
+    category,
+    catalogTypeId: dto.catalogTypeId,
+    catalogBrandId: dto.catalogBrandId,
+    rating: 4,
+    reviews: 0,
+    inStock: true,
+    deliveryTime: '2-4 hours',
+  };
+}
+
 export const ProductProvider = ({ children }) => {
   const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState(['All']);
+  const [productsLoading, setProductsLoading] = useState(true);
+  const [productsError, setProductsError] = useState(null);
 
-  // Load products from localStorage on mount, or use initial products
-  useEffect(() => {
-    const savedProducts = localStorage.getItem('products');
-    if (savedProducts) {
-      setProducts(JSON.parse(savedProducts));
-    } else {
-      // Initialize with default products if no saved products
-      setProducts(initialProducts);
-      localStorage.setItem('products', JSON.stringify(initialProducts));
+  const loadProducts = useCallback(async () => {
+    setProductsLoading(true);
+    setProductsError(null);
+    try {
+      const [catalogRes, typesRes] = await Promise.all([
+        fetchCatalogItems({ pageSize: 500, pageIndex: 0 }),
+        fetchCatalogTypes(),
+      ]);
+      const typeMap = {};
+      (typesRes.catalogTypes || []).forEach((t) => { typeMap[t.id] = t.name; });
+      setCategories(['All', ...(typesRes.catalogTypes || []).map((t) => t.name)]);
+      const list = (catalogRes.catalogItems || []).map((d) => mapCatalogItemToProduct(d, typeMap));
+      setProducts(list);
+    } catch (e) {
+      setProductsError(e.message || 'Ошибка загрузки каталога');
+      setProducts([]);
+    } finally {
+      setProductsLoading(false);
     }
   }, []);
 
-  // Save products to localStorage whenever they change
   useEffect(() => {
-    if (products.length > 0) {
-      localStorage.setItem('products', JSON.stringify(products));
-    }
-  }, [products]);
+    loadProducts();
+  }, [loadProducts]);
 
   const addProduct = (productData) => {
     const newProduct = {
@@ -40,33 +71,35 @@ export const ProductProvider = ({ children }) => {
       rating: productData.rating || 4.0,
       reviews: productData.reviews || 0,
       inStock: productData.inStock !== undefined ? productData.inStock : true,
-      deliveryTime: productData.deliveryTime || '2-4 hours'
+      deliveryTime: productData.deliveryTime || '2-4 hours',
     };
-    setProducts([...products, newProduct]);
+    setProducts((prev) => [...prev, newProduct]);
     return newProduct;
   };
 
   const updateProduct = (id, updatedData) => {
-    setProducts(products.map(product =>
-      product.id === id ? { ...product, ...updatedData } : product
-    ));
+    setProducts((prev) =>
+      prev.map((p) => (p.id === Number(id) ? { ...p, ...updatedData } : p))
+    );
   };
 
   const deleteProduct = (id) => {
-    setProducts(products.filter(product => product.id !== id));
+    setProducts((prev) => prev.filter((p) => p.id !== Number(id)));
   };
 
   const getProductById = (id) => {
-    return products.find(product => product.id === parseInt(id));
+    const num = Number(id);
+    return products.find((p) => p.id === num);
   };
 
-  const getCategories = () => {
-    return categories;
-  };
+  const getCategories = () => categories;
 
   const value = {
     products,
     categories,
+    productsLoading,
+    productsError,
+    refetchProducts: loadProducts,
     addProduct,
     updateProduct,
     deleteProduct,

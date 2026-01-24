@@ -6,7 +6,7 @@ import { useSearch } from '../context/SearchContext';
 import '../styles/Home.css';
 
 export default function Home() {
-  const { products, categories } = useProducts();
+  const { products, categories, productsLoading, productsError } = useProducts();
   const [selectedCategory, setSelectedCategory] = useState('All');
   const { searchQuery } = useSearch();
   const [minPrice, setMinPrice] = useState(0);
@@ -156,7 +156,15 @@ export default function Home() {
               <p className="results-count">{sortedProducts.length} products found</p>
             </div>
             
-            {sortedProducts.length > 0 ? (
+            {productsLoading && products.length === 0 ? (
+              <div className="no-products">
+                <p>Загрузка каталога...</p>
+              </div>
+            ) : productsError ? (
+              <div className="no-products">
+                <p>Ошибка: {productsError}. Проверьте, что бэкенд запущен (VITE_API_URL в .env).</p>
+              </div>
+            ) : sortedProducts.length > 0 ? (
               <div className="products-container">
                 {sortedProducts.map((product) => (
                   <ProductCard key={product.id} product={product} />
@@ -164,7 +172,7 @@ export default function Home() {
               </div>
             ) : (
               <div className="no-products">
-                <p>No products found. Try adjusting your search or filters.</p>
+                <p>Товары не найдены. Измените поиск или фильтры.</p>
               </div>
             )}
           </div>

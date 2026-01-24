@@ -18,6 +18,12 @@
   color: var(--text-color);
 }
 
+.cart-error {
+  color: var(--error-color, #dc2626);
+  margin-bottom: 16px;
+  font-size: 14px;
+}
+
 .cart-content {
   display: grid;
   grid-template-columns: 1fr 400px;

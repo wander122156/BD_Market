@@ -1,4 +1,5 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { fetchBasket, addToBasket } from '../api/basketApi';
 
 const CartContext = createContext();
 
@@ -12,66 +13,92 @@ export const useCart = () => {
 
 export const CartProvider = ({ children }) => {
   const [cartItems, setCartItems] = useState([]);
+  const [basketId, setBasketId] = useState(null);
   const [orders, setOrders] = useState([]);
+  const [cartLoading, setCartLoading] = useState(true);
+  const [cartError, setCartError] = useState(null);
 
-  // Load cart from localStorage on mount
-  useEffect(() => {
-    const savedCart = localStorage.getItem('cart');
-    if (savedCart) {
-      setCartItems(JSON.parse(savedCart));
-    }
-    const savedOrders = localStorage.getItem('orders');
-    if (savedOrders) {
-      setOrders(JSON.parse(savedOrders));
+  const loadBasket = useCallback(async () => {
+    setCartLoading(true);
+    setCartError(null);
+    try {
+      const data = await fetchBasket();
+      if (!data) {
+        setBasketId(null);
+        setCartItems([]);
+      } else {
+        setBasketId(data.basketId);
+        setCartItems(
+          (data.items || []).map((i) => ({
+            id: i.id,
+            catalogItemId: i.catalogItemId,
+            unitPrice: Number(i.unitPrice),
+            quantity: i.quantity,
+          }))
+        );
+      }
+    } catch (e) {
+      setCartError(e.message || 'Ошибка загрузки корзины');
+      setCartItems([]);
+      setBasketId(null);
+    } finally {
+      setCartLoading(false);
     }
   }, []);
 
-  // Save cart to localStorage whenever it changes
   useEffect(() => {
-    localStorage.setItem('cart', JSON.stringify(cartItems));
-  }, [cartItems]);
+    loadBasket();
+  }, [loadBasket]);
 
-  const addToCart = (product) => {
-    setCartItems((prevItems) => {
-      const existingItem = prevItems.find((item) => item.id === product.id);
-      if (existingItem) {
-        return prevItems.map((item) =>
-          item.id === product.id
-            ? { ...item, quantity: item.quantity + 1 }
-            : item
-        );
-      }
-      return [...prevItems, { ...product, quantity: 1 }];
-    });
+  // Заказы по-прежнему в localStorage (эндпоинтов заказов пока нет)
+  useEffect(() => {
+    const saved = localStorage.getItem('orders');
+    if (saved) setOrders(JSON.parse(saved));
+  }, []);
+  useEffect(() => {
+    if (orders.length > 0) localStorage.setItem('orders', JSON.stringify(orders));
+  }, [orders]);
+
+  const addToCart = async (product) => {
+    try {
+      await addToBasket({
+        catalogItemId: product.id,
+        price: product.price,
+        quantity: 1,
+      });
+      await loadBasket();
+    } catch (e) {
+      setCartError(e.message || 'Ошибка добавления в корзину');
+    }
   };
 
-  const removeFromCart = (productId) => {
-    setCartItems((prevItems) => prevItems.filter((item) => item.id !== productId));
+  // Без SetQuantities: только локальное состояние. При следующем loadBasket
+  // (например, при addToCart или перезаходе в корзину) данные с сервера перезапишут правки.
+  const removeFromCart = (catalogItemId) => {
+    setCartItems((prev) => prev.filter((i) => i.catalogItemId !== catalogItemId));
   };
 
-  const updateQuantity = (productId, quantity) => {
+  const updateQuantity = (catalogItemId, quantity) => {
     if (quantity <= 0) {
-      removeFromCart(productId);
+      removeFromCart(catalogItemId);
       return;
     }
-    setCartItems((prevItems) =>
-      prevItems.map((item) =>
-        item.id === productId ? { ...item, quantity } : item
+    setCartItems((prev) =>
+      prev.map((i) =>
+        i.catalogItemId === catalogItemId ? { ...i, quantity } : i
       )
     );
   };
 
   const clearCart = () => {
     setCartItems([]);
+    setBasketId(null);
   };
 
-  const getCartTotal = () => {
-    return cartItems.reduce((total, item) => total + item.price * item.quantity, 0);
-  };
+  const getCartTotal = () =>
+    cartItems.reduce((s, i) => s + i.unitPrice * i.quantity, 0);
 
-  const getCartItemsCount = () => {
-    return cartItems.reduce((count, item) => count + item.quantity, 0);
-  };
+  const getCartItemsCount = () => cartItems.reduce((s, i) => s + i.quantity, 0);
 
   const placeOrder = (orderDetails) => {
     const order = {
@@ -81,12 +108,12 @@ export const CartProvider = ({ children }) => {
       ...orderDetails,
       status: 'Processing',
       orderDate: new Date().toISOString(),
-      estimatedDelivery: new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString(), // 4 hours from now
+      estimatedDelivery: new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString(),
     };
-    setOrders((prevOrders) => {
-      const updatedOrders = [order, ...prevOrders];
-      localStorage.setItem('orders', JSON.stringify(updatedOrders));
-      return updatedOrders;
+    setOrders((prev) => {
+      const next = [order, ...prev];
+      localStorage.setItem('orders', JSON.stringify(next));
+      return next;
     });
     clearCart();
     return order;
@@ -94,6 +121,9 @@ export const CartProvider = ({ children }) => {
 
   const value = {
     cartItems,
+    cartLoading,
+    cartError,
+    refetchCart: loadBasket,
     addToCart,
     removeFromCart,
     updateQuantity,
@@ -106,4 +136,3 @@ export const CartProvider = ({ children }) => {
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 };
-

@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
+import { useProducts } from '../context/ProductContext';
 import { useUser } from '../context/UserContext';
 import '../styles/Checkout.css';
 
 export default function Checkout() {
   const { cartItems, getCartTotal, placeOrder } = useCart();
+  const { getProductById } = useProducts();
   const { user, addresses, paymentMethods } = useUser();
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
@@ -328,18 +330,21 @@ export default function Checkout() {
           </div>
 
           <div className="checkout-summary">
-            <h2>Order Summary</h2>
+            <h2>Состав заказа</h2>
             <div className="order-items">
-              {cartItems.map((item) => (
-                <div key={item.id} className="order-item">
-                  <img src={item.image} alt={item.name} className="order-item-image" />
-                  <div className="order-item-info">
-                    <h4>{item.name}</h4>
-                    <p>Qty: {item.quantity}</p>
+              {cartItems.map((item) => {
+                const product = getProductById(item.catalogItemId);
+                return (
+                  <div key={item.id} className="order-item">
+                    <img src={product?.image} alt={product?.name || 'Товар'} className="order-item-image" />
+                    <div className="order-item-info">
+                      <h4>{product?.name || `Товар #${item.catalogItemId}`}</h4>
+                      <p>Кол-во: {item.quantity}</p>
+                    </div>
+                    <span className="order-item-price">${(item.unitPrice * item.quantity).toFixed(2)}</span>
                   </div>
-                  <span className="order-item-price">${(item.price * item.quantity).toFixed(2)}</span>
-                </div>
-              ))}
+                );
+              })}
             </div>
             <div className="order-summary-total">
               <div className="summary-row">
