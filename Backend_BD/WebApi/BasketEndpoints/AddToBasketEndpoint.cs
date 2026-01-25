@@ -1,10 +1,12 @@
 using Backend_BD.AppCore.Interfaces;
+using Backend_BD.WebApi.Services;
 using FastEndpoints;
 
 namespace Backend_BD.WebApi.BasketEndpoints;
 
 public class AddToBasketEndpoint(
     IBasketService basketService,  // Сервис, не репозиторий т.к. бизнес логика для изменения
+    IBasketViewModelService basketViewModelService,
     ILogger<AddToBasketEndpoint> logger
 )
     : Endpoint<AddToBasketRequest, AddToBasketResponse>
@@ -20,6 +22,8 @@ public class AddToBasketEndpoint(
 
     public override async Task HandleAsync(AddToBasketRequest request, CancellationToken ct)
     {
+        AddToBasketResponse response = new();
+        
         Guid correlationId = request.CorrelationId();
         string username = User.Identity?.Name ?? "anonymous";
 
@@ -33,21 +37,12 @@ public class AddToBasketEndpoint(
             request.Price,
             request.Quantity);
 
-        AddToBasketResponse response = new(correlationId)
-        {
-            Basket = new BasketDto
-            {
-                Id = basket.Id,
-                BuyerId = basket.BuyerId,
-                Items = basket.Items.Select(item => new BasketItemDto
-                {
-                    Id = item.Id,
-                    CatalogItemId = item.CatalogItemId,
-                    UnitPrice = item.UnitPrice,
-                    Quantity = item.Quantity,
-                }).ToList()
-            }
-        };
+        BasketDto basketDto = await basketViewModelService.MapBasketToDto(basket);
+        response.Basket = basketDto;
+        
+        logger.LogInformation(
+            "Товар добавлен. Всего в корзине: {ItemCount} товаров. Total: {Total:C}. CorrelationId: {CorrelationId}",
+            basketDto.Items.Count, basketDto.Total(), response.CorrelationId);
 
         await Send.OkAsync(response, ct);
     }

@@ -51,6 +51,18 @@
       <Compile Update="BasketEndpoints\AddToBasketEndpoint.AddToBasketResponse.cs">
         <DependentUpon>AddToBasketEndpoint.cs</DependentUpon>
       </Compile>
+      <Compile Update="BasketEndpoints\UpdateBasketItemEndpoint.UpdateBasketItemRequest.cs">
+        <DependentUpon>UpdateBasketItemEndpoint.cs</DependentUpon>
+      </Compile>
+      <Compile Update="BasketEndpoints\UpdateBasketItemEndpoint.UpdateBasketItemResponse.cs">
+        <DependentUpon>UpdateBasketItemEndpoint.cs</DependentUpon>
+      </Compile>
+      <Compile Update="BasketEndpoints\DeleteBasketItemEndpoint.DeleteBasketItemRequest.cs">
+        <DependentUpon>DeleteBasketItemEndpoint.cs</DependentUpon>
+      </Compile>
+      <Compile Update="BasketEndpoints\DeleteBasketItemEndpoint.DeleteBasketItemResponse.cs">
+        <DependentUpon>DeleteBasketItemEndpoint.cs</DependentUpon>
+      </Compile>
     </ItemGroup>
 
 </Project>
