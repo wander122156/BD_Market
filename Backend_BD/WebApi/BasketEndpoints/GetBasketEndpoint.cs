@@ -8,6 +8,7 @@ namespace Backend_BD.WebApi.BasketEndpoints;
 
 public class GetBasketEndpoint(
     IRepository<Basket> basketRepository, // Репозиторий, а не сервис, т.к. для чтения
+    IBuyerIdService buyerIdService,
     IBasketViewModelService basketViewModelService,
     ILogger<GetBasketEndpoint> logger
     )
@@ -27,31 +28,33 @@ public class GetBasketEndpoint(
     {
         GetBasketResponse response = new();
         Guid correlationId = response.CorrelationId();
-        string username = User.Identity?.Name ?? "anonymous"; // Пока без авторизации
+        
+        string buyerId = buyerIdService.GetBuyerId(HttpContext, User);
         
         logger.LogInformation(
-            "Получение корзины для пользователя {Username}. CorrelationId: {CorrelationId}",
-            username, correlationId);
+            "Получение корзины для пользователя {buyerId}. CorrelationId: {CorrelationId}",
+            buyerId, correlationId);
 
-        BasketWithItemsSpecification basketSpec = new(username);
-        Basket? basket = await basketRepository.FirstOrDefaultAsync(basketSpec, ct);
+        BasketWithItemsSpecification basketSpec = new(buyerId);
         
-        if (basket == null)
+        try
         {
-            await Send.NotFoundAsync(ct);
-            return;
+            var basketDto = await basketViewModelService.GetOrCreateBasketForUser(buyerId);
+            
+            response.BasketId = basketDto.Id;
+            response.BuyerId = basketDto.BuyerId;
+            response.Items.AddRange(basketDto.Items);
+            
+            logger.LogInformation(
+                "Returned basket with {Count} items. Total: {Total:C}. CorrelationId: {CorrelationId}",
+                response.Items.Count, response.Total, correlationId);
+            
+            await Send.OkAsync(response, ct);
         }
-        
-        var basketDto = await basketViewModelService.MapBasketToDto(basket);
-
-        response.BasketId = basket.Id;
-        response.BuyerId = basket.BuyerId;
-        response.Items.AddRange(basketDto.Items);
-        
-        logger.LogInformation(
-            "Возвращена корзина с {Count} товарами. Total: {Total:C}. CorrelationId: {CorrelationId}",
-            response.Items.Count, response.Total, response.CorrelationId);
-
-        await Send.OkAsync(response, ct);
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to get or create basket for buyer {BuyerId}", buyerId);
+            await Send.ErrorsAsync(500, ct);
+        }
     }
 }

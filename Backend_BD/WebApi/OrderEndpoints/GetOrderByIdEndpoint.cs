@@ -1,5 +1,6 @@
 using Backend_BD.AppCore.Interfaces;
 using Backend_BD.AppCore.Specifications;
+using Backend_BD.WebApi.Services;
 using FastEndpoints;
 using Order = Backend_BD.AppCore.Entities.OrderAggregate.Order;
 
@@ -7,6 +8,7 @@ namespace Backend_BD.WebApi.OrderEndpoints;
 
 public class GetOrderByIdEndpoint(
     IOrderService orderService,
+    IBuyerIdService buyerIdService,
     ILogger<GetOrderByIdEndpoint> logger
     )
     : EndpointWithoutRequest<GetOrderByIdResponse>
@@ -29,8 +31,8 @@ public class GetOrderByIdEndpoint(
         
         logger.LogInformation("Fetching order {OrderId}. CorrelationId: {CorrelationId}", orderId, correlationId);
 
-        string buyerId = User?.Identity?.Name ?? "anonymous";
-        
+        // string buyerId = User?.Identity?.Name ?? "anonymous";
+        string buyerId = buyerIdService.GetBuyerId(HttpContext, User);
         
         var spec = new OrderWithItemsByIdSpec(orderId);
         

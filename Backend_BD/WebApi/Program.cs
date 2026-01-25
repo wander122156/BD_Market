@@ -85,7 +85,6 @@ builder.Services.AddAuthentication(options =>
     
 builder.Services.AddAuthorization(options =>
 {
-    // Политика для администраторов
     options.AddPolicy("AdminOnly", policy => 
         policy.RequireRole(AuthorizationConstants.Roles.ADMINISTRATORS));
     
@@ -109,6 +108,7 @@ builder.Services.AddAuthorization(options =>
             context.User.IsInRole(AuthorizationConstants.Roles.ADMINISTRATORS) ||
             context.User.IsInRole(AuthorizationConstants.Roles.MANAGERS) ));
 });
+
 // DI, Когда кто-то попросит IRepository<T>, создай и дай ему EfRepository<T>
 builder.Services.AddScoped(typeof(IRepository<>), typeof(EfRepository<>));
 builder.Services.AddScoped<IBasketService, BasketService>();
@@ -116,6 +116,7 @@ builder.Services.AddScoped(typeof(IAppLogger<>), typeof(LoggerAdapter<>));
 builder.Services.AddScoped<IBasketViewModelService, BasketViewModelService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<ITokenClaimsService, IdentityTokenClaimService>();
+builder.Services.AddScoped<IBuyerIdService, BuyerIdService>();
 
 var catalogSettings = builder.Configuration.Get<CatalogSettings>() ?? new CatalogSettings();
 builder.Services.AddSingleton<IUriComposer>(new UriComposer(catalogSettings));

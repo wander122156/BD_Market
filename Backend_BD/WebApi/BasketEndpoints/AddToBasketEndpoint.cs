@@ -7,6 +7,7 @@ namespace Backend_BD.WebApi.BasketEndpoints;
 public class AddToBasketEndpoint(
     IBasketService basketService,  // Сервис, не репозиторий т.к. бизнес логика для изменения
     IBasketViewModelService basketViewModelService,
+    IBuyerIdService buyerIdService,
     ILogger<AddToBasketEndpoint> logger
 )
     : Endpoint<AddToBasketRequest, AddToBasketResponse>
@@ -25,14 +26,15 @@ public class AddToBasketEndpoint(
         AddToBasketResponse response = new();
         
         Guid correlationId = request.CorrelationId();
-        string username = User.Identity?.Name ?? "anonymous";
+        // string username = User.Identity?.Name ?? "anonymous";
+        string buyerId = buyerIdService.GetBuyerId(HttpContext, User);
 
         logger.LogInformation(
-            "Добавление товара {ItemId} в корзину. Username: {Username}, CorrelationId: {CorrelationId}",
-            request.CatalogItemId, username, correlationId);
+            "Добавление товара {ItemId} в корзину. Username: {buyerId}, CorrelationId: {CorrelationId}",
+            request.CatalogItemId, buyerId, correlationId);
 
         var basket = await basketService.AddItemToBasket(
-            username,
+            buyerId,
             request.CatalogItemId,
             request.Price,
             request.Quantity);

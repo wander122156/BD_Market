@@ -7,6 +7,7 @@ using Backend_BD.WebApi.BasketEndpoints;
 namespace Backend_BD.WebApi.Services;
 public class BasketViewModelService(
     IRepository<CatalogItem> catalogItemRepository,
+    IRepository<Basket> basketRepository,
     IUriComposer uriComposer,
     IAppLogger<BasketViewModelService> logger
 ) 
@@ -51,5 +52,42 @@ public class BasketViewModelService(
             BuyerId = basket.BuyerId,
             Items = items
         };
+    }
+
+    public async Task<BasketDto> GetOrCreateBasketForUser(string buyerId)
+    {
+        logger.LogInformation("Getting or creating basket for buyer: {BuyerId}", buyerId);
+        
+        var basketSpec = new BasketWithItemsSpecification(buyerId);
+        var basket = await basketRepository.FirstOrDefaultAsync(basketSpec);
+        
+        // создание корзины
+        if (basket == null)
+        {
+            logger.LogInformation("Basket not found for buyer {BuyerId}, creating new one", buyerId);
+            
+            basket = new Basket(buyerId);
+            
+            await basketRepository.AddAsync(basket);
+            
+            // После сохранения нужно получить её снова, чтобы иметь Id
+            basket = await basketRepository.FirstOrDefaultAsync(basketSpec);
+            
+            if (basket == null)
+            {
+                logger.LogWarning("Failed to create basket for buyer: {BuyerId}", buyerId);
+                throw new InvalidOperationException($"Failed to create basket for buyer: {buyerId}");
+            }
+            
+            logger.LogInformation("Created new basket {BasketId} for buyer {BuyerId}", 
+                basket.Id, buyerId);
+        }
+        else
+        {
+            logger.LogInformation("Found existing basket {BasketId} for buyer {BuyerId}", 
+                basket.Id, buyerId);
+        }
+        
+        return await MapBasketToDto(basket);
     }
 }

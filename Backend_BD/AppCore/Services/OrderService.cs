@@ -18,6 +18,7 @@ public class OrderService(
 {
     public async Task<Order> CreateOrderAsync(string buyerId, Address shippingAddress)
     {
+        // buyerId - это ClaimTypes.NameIdentifier из Identity
         BasketWithItemsSpecification basketSpec = new(buyerId);
         Basket? basket = await basketRepository.FirstOrDefaultAsync(basketSpec);
 

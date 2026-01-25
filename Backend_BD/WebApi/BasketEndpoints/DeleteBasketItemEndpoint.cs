@@ -7,7 +7,8 @@ using FastEndpoints;
 namespace Backend_BD.WebApi.BasketEndpoints;
 
 public class DeleteBasketItemEndpoint(
-    IBasketService basketService, // Используем сервис вместо репозитория!
+    IBasketService basketService,
+    IBuyerIdService buyerIdService,
     IRepository<Basket> basketRepository,
     IBasketViewModelService basketViewModelService,
     ILogger<DeleteBasketItemEndpoint> logger
@@ -27,13 +28,14 @@ public class DeleteBasketItemEndpoint(
     public override async Task HandleAsync(DeleteBasketItemRequest request, CancellationToken ct)
     {
         var response = new DeleteBasketItemResponse(request.CorrelationId());
-        string username = User.Identity?.Name ?? "anonymous";
+        // string username = User.Identity?.Name ?? "anonymous";
+        string buyerId = buyerIdService.GetBuyerId(HttpContext, User);
 
         logger.LogInformation(
-            "Удаление товара {BasketItemId} из корзины пользователя {Username}. CorrelationId: {CorrelationId}",
-            request.BasketItemId, username, response.CorrelationId);
+            "Удаление товара {BasketItemId} из корзины пользователя {buyerId}. CorrelationId: {CorrelationId}",
+            request.BasketItemId, buyerId, response.CorrelationId);
 
-        var basketSpec = new BasketWithItemsSpecification(username);
+        var basketSpec = new BasketWithItemsSpecification(buyerId);
         var basket = await basketRepository.FirstOrDefaultAsync(basketSpec, ct);
         
         if (basket == null)

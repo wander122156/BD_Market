@@ -8,6 +8,7 @@ namespace Backend_BD.WebApi.BasketEndpoints;
 
 public class UpdateBasketItemEndpoint(
     IRepository<Basket> basketRepository,
+    IBuyerIdService buyerIdService,
     IBasketViewModelService basketViewModelService,
     ILogger<UpdateBasketItemEndpoint> logger
 )
@@ -28,21 +29,21 @@ public class UpdateBasketItemEndpoint(
     {
         UpdateBasketItemResponse response = new(request.CorrelationId());
         
-        string username = User.Identity?.Name ?? "anonymous";
+        string buyerId = buyerIdService.GetBuyerId(HttpContext, User);
 
         logger.LogInformation(
-            "Обновление количества товара {BasketItemId} на {Quantity} для пользователя {Username}. CorrelationId: {CorrelationId}",
-            request.BasketItemId, request.Quantity, username, response.CorrelationId);
+            "Обновление количества товара {BasketItemId} на {Quantity} для пользователя {buyerId}. CorrelationId: {CorrelationId}",
+            request.BasketItemId, request.Quantity, buyerId, response.CorrelationId);
 
         // Получаем корзину пользователя
-        var basketSpec = new BasketWithItemsSpecification(username);
+        var basketSpec = new BasketWithItemsSpecification(buyerId);
         var basket = await basketRepository.FirstOrDefaultAsync(basketSpec, ct);
         
         if (basket == null)
         {
             logger.LogWarning(
-                "Корзина не найдена для пользователя {Username}. CorrelationId: {CorrelationId}",
-                username, response.CorrelationId);
+                "Корзина не найдена для пользователя {buyerId}. CorrelationId: {CorrelationId}",
+                buyerId, response.CorrelationId);
             
             await Send.NotFoundAsync(ct);
             return;
@@ -54,18 +55,18 @@ public class UpdateBasketItemEndpoint(
         if (basketItem == null)
         {
             logger.LogWarning(
-                "Товар {BasketItemId} не найден в корзине пользователя {Username}. CorrelationId: {CorrelationId}",
-                request.BasketItemId, username, response.CorrelationId);
+                "Товар {BasketItemId} не найден в корзине пользователя {buyerId}. CorrelationId: {CorrelationId}",
+                request.BasketItemId, buyerId, response.CorrelationId);
             
             await Send.NotFoundAsync(ct);
             return;
         }
 
-        if (basket.BuyerId != username)
+        if (basket.BuyerId != buyerId)
         {
             logger.LogWarning(
-                "Попытка изменить чужую корзину. User: {Username}, Basket: {BuyerId}. CorrelationId: {CorrelationId}",
-                username, basket.BuyerId, response.CorrelationId);
+                "Попытка изменить чужую корзину. User: {buyerId}, Basket: {BuyerId}. CorrelationId: {CorrelationId}",
+                buyerId, basket.BuyerId, response.CorrelationId);
             
             await Send.ForbiddenAsync(ct);
             return;

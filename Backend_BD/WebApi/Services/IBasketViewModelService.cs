@@ -6,4 +6,5 @@ namespace Backend_BD.WebApi.Services;
 public interface IBasketViewModelService
 {
     Task<BasketDto> MapBasketToDto(Basket basket);
+    Task<BasketDto> GetOrCreateBasketForUser(string buyerId);
 }

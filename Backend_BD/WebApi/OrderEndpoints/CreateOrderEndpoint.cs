@@ -1,11 +1,13 @@
 using Backend_BD.AppCore.Entities.OrderAggregate;
 using Backend_BD.AppCore.Interfaces;
+using Backend_BD.WebApi.Services;
 using FastEndpoints;
 
 namespace Backend_BD.WebApi.OrderEndpoints;
 
 public class CreateOrderEndpoint(
     IOrderService orderService,
+    IBuyerIdService buyerIdService,
     ILogger<CreateOrderEndpoint> logger
 ) : Endpoint<CreateOrderRequest, CreateOrderResponse>
 {
@@ -22,8 +24,9 @@ public class CreateOrderEndpoint(
     public override async Task HandleAsync(CreateOrderRequest request, CancellationToken ct)
     {
         var response = new CreateOrderResponse(request.CorrelationId());
-        string buyerId = User.Identity?.Name ?? "anonymous";
-
+        // string buyerId = User.Identity?.Name ?? "anonymous";
+        string buyerId = buyerIdService.GetBuyerId(HttpContext, User);
+        
         logger.LogInformation(
             "Creating order for user {BuyerId}. CorrelationId: {CorrelationId}",
             buyerId, response.CorrelationId);
