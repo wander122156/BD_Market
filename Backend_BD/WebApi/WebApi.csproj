@@ -93,6 +93,9 @@
       <Compile Update="UserManagementEndpoints\CreateUserDto.cs">
         <DependentUpon>CreateUserEndpoint.cs</DependentUpon>
       </Compile>
+      <Compile Update="UserManagementEndpoints\UserGetByUserNameEndpoint.GetByUserNameUserRequest.cs">
+        <DependentUpon>UserGetByUserNameEndpoint.cs</DependentUpon>
+      </Compile>
     </ItemGroup>
 
 </Project>
