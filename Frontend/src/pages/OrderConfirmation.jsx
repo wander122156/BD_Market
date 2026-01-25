@@ -6,6 +6,7 @@ export default function OrderConfirmation() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { orders } = useCart();
+  
   const order = orders.find((o) => o.id === parseInt(id));
 
   if (!order) {
@@ -19,7 +20,7 @@ export default function OrderConfirmation() {
     );
   }
 
-  const deliveryDate = new Date(order.estimatedDelivery).toLocaleString();
+  const orderDate = new Date(order.orderDate).toLocaleString();
 
   return (
     <div className="order-confirmation">
@@ -31,38 +32,69 @@ export default function OrderConfirmation() {
           </svg>
           <h1>Order Placed Successfully!</h1>
           <p className="order-id">Order ID: #{order.id}</p>
+          <p className="order-date">Order Date: {orderDate}</p>
         </div>
 
         <div className="confirmation-details">
           <div className="detail-card">
             <h3>Delivery Information</h3>
-            <p><strong>Name:</strong> {order.name}</p>
-            <p><strong>Address:</strong> {order.address}</p>
-            <p><strong>City:</strong> {order.city}, {order.zipCode}</p>
-            <p><strong>Phone:</strong> {order.phone}</p>
-            <p><strong>Estimated Delivery:</strong> {deliveryDate}</p>
+            {order.shippingAddress ? (
+              <>
+                <p><strong>Address:</strong> {order.shippingAddress.street}</p>
+                <p><strong>City:</strong> {order.shippingAddress.city}</p>
+                {order.shippingAddress.state && (
+                  <p><strong>State:</strong> {order.shippingAddress.state}</p>
+                )}
+                <p><strong>Country:</strong> {order.shippingAddress.country}</p>
+                <p><strong>ZIP Code:</strong> {order.shippingAddress.zipCode}</p>
+              </>
+            ) : (
+              <>
+                {order.address && <p><strong>Address:</strong> {order.address}</p>}
+                {order.city && <p><strong>City:</strong> {order.city}</p>}
+                {order.state && <p><strong>State:</strong> {order.state}</p>}
+                {order.country && <p><strong>Country:</strong> {order.country}</p>}
+                {order.zipCode && <p><strong>ZIP Code:</strong> {order.zipCode}</p>}
+              </>
+            )}
           </div>
 
           <div className="detail-card">
             <h3>Order Items</h3>
             <div className="confirmation-items">
-              {order.items.map((item) => (
-                <div key={item.id} className="confirmation-item">
-                  <img src={item.image} alt={item.name} className="confirmation-item-image" />
-                  <div className="confirmation-item-info">
-                    <h4>{item.name}</h4>
-                    <p>Quantity: {item.quantity} × ${item.price.toFixed(2)}</p>
+              {order.items && order.items.length > 0 ? (
+                order.items.map((item) => (
+                  <div key={item.id || item.catalogItemId} className="confirmation-item">
+                    <img 
+                      src={"http://localhost:5064" + (item.pictureUrl || item.image || '')} 
+                      alt={item.name || item.productName} 
+                      className="confirmation-item-image" 
+                    />
+                    <div className="confirmation-item-info">
+                      <h4>{item.name || item.productName}</h4>
+                      <p>Quantity: {item.quantity || item.units} × ${(item.price || item.unitPrice).toFixed(2)}</p>
+                    </div>
+                    <span className="confirmation-item-price">
+                      ${((item.quantity || item.units) * (item.price || item.unitPrice)).toFixed(2)}
+                    </span>
                   </div>
-                  <span className="confirmation-item-price">
-                    ${(item.price * item.quantity).toFixed(2)}
-                  </span>
-                </div>
-              ))}
+                ))
+              ) : (
+                <p>No items in this order</p>
+              )}
             </div>
             <div className="confirmation-total">
               <div className="total-row">
+                <span>Subtotal:</span>
+                <span>${order.total?.toFixed(2)}</span>
+              </div>
+              <div className="total-row">
+                <span>Delivery:</span>
+                <span className="free">FREE</span>
+              </div>
+              <div className="total-row grand-total">
                 <span>Total:</span>
-                <span>${order.total.toFixed(2)}</span>
+                <span>${order.total?.toFixed(2)}</span>
               </div>
             </div>
           </div>
@@ -76,4 +108,3 @@ export default function OrderConfirmation() {
     </div>
   );
 }
-
