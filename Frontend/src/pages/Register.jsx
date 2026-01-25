@@ -5,7 +5,7 @@ import '../styles/Auth.css';
 
 export default function Register() {
   const navigate = useNavigate();
-  const { register } = useUser();
+  const { register, isLoading, error } = useUser();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -13,18 +13,11 @@ export default function Register() {
     confirmPassword: ''
   });
   const [errors, setErrors] = useState({});
-  const [loading, setLoading] = useState(false);
+  const [formError, setFormError] = useState('');
 
   const validateEmail = (email) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
-  };
-
-  const validatePassword = (password) => {
-    const minLength = password.length >= 8;
-    const hasNumber = /\d/.test(password);
-    const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(password);
-    return { minLength, hasNumber, hasSpecial };
   };
 
   const handleChange = (e) => {
@@ -38,6 +31,7 @@ export default function Register() {
         [e.target.name]: ''
       });
     }
+    setFormError('');
   };
 
   const handleSubmit = async (e) => {
@@ -54,36 +48,23 @@ export default function Register() {
       newErrors.email = 'Invalid email format';
     }
 
-    const passwordValidation = validatePassword(formData.password);
-    if (!formData.password) {
-      newErrors.password = 'Password is required';
-    } else if (!passwordValidation.minLength) {
-      newErrors.password = 'Password must be at least 8 characters';
-    } else if (!passwordValidation.hasNumber) {
-      newErrors.password = 'Password must contain at least one number';
-    } else if (!passwordValidation.hasSpecial) {
-      newErrors.password = 'Password must contain at least one special character';
-    }
-
-    if (!formData.confirmPassword) {
-      newErrors.confirmPassword = 'Please confirm your password';
-    } else if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match';
-    }
-
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
     }
 
-    setLoading(true);
+    setFormError('');
+    
     try {
-      register(formData);
+      await register({
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+        userName: formData.name // Добавляем userName для API
+      });
       navigate('/');
     } catch (error) {
-      setErrors({ email: error.message });
-    } finally {
-      setLoading(false);
+      setFormError(error.message);
     }
   };
 
@@ -92,15 +73,21 @@ export default function Register() {
       <div className="auth-card">
         <h1>Create Account</h1>
         <form onSubmit={handleSubmit} className="auth-form">
+          {/* Показываем ошибки из контекста */}
+          {(error || formError) && (
+            <div className="error-banner">{error || formError}</div>
+          )}
+
           <div className="form-group">
-            <label>Full Name *</label>
+            <label>Full Name (Username) *</label> {/* Добавляем пояснение */}
             <input
               type="text"
               name="name"
               value={formData.name}
               onChange={handleChange}
               className={errors.name ? 'error' : ''}
-              placeholder="Enter your full name"
+              placeholder="Enter your full name (will be used as username)"
+              disabled={isLoading}
             />
             {errors.name && <span className="error-message">{errors.name}</span>}
           </div>
@@ -114,6 +101,7 @@ export default function Register() {
               onChange={handleChange}
               className={errors.email ? 'error' : ''}
               placeholder="Enter your email"
+              disabled={isLoading}
             />
             {errors.email && <span className="error-message">{errors.email}</span>}
           </div>
@@ -127,6 +115,7 @@ export default function Register() {
               onChange={handleChange}
               className={errors.password ? 'error' : ''}
               placeholder="Create a password"
+              disabled={isLoading}
             />
             {errors.password && <span className="error-message">{errors.password}</span>}
             <div className="password-hints">
@@ -143,12 +132,17 @@ export default function Register() {
               onChange={handleChange}
               className={errors.confirmPassword ? 'error' : ''}
               placeholder="Confirm your password"
+              disabled={isLoading}
             />
             {errors.confirmPassword && <span className="error-message">{errors.confirmPassword}</span>}
           </div>
 
-          <button type="submit" className="auth-button" disabled={loading}>
-            {loading ? 'Creating Account...' : 'Register'}
+          <button 
+            type="submit" 
+            className="auth-button" 
+            disabled={isLoading}
+          >
+            {isLoading ? 'Creating Account...' : 'Register'}
           </button>
         </form>
 
@@ -159,4 +153,3 @@ export default function Register() {
     </div>
   );
 }
-

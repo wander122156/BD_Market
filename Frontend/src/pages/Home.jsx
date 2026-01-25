@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { useProducts } from '../context/ProductContext';
+import { Link, Navigate } from 'react-router-dom';
+import { useProducts } from '../context/ProductContext.jsx';
 import ProductCard from '../components/ProductCard';
 import { useSearch } from '../context/SearchContext';
+import { useUser } from '../context/UserContext';
 import '../styles/Home.css';
 
 export default function Home() {
@@ -13,6 +14,12 @@ export default function Home() {
   const [maxPrice, setMaxPrice] = useState(1500);
   const [sortBy, setSortBy] = useState('default');
   const [displayedProducts, setDisplayedProducts] = useState([]);
+  
+  const { isAuthenticated } = useUser(); 
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
 
   useEffect(() => {
     if (products.length > 0) {
@@ -28,6 +35,7 @@ export default function Home() {
     }
   }, [products]);
 
+  // ... остальной код без изменений
   const filteredProducts = displayedProducts.filter((product) => {
     const matchesCategory = selectedCategory === 'All' || product.category === selectedCategory;
     const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||

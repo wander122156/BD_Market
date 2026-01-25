@@ -5,34 +5,41 @@ import '../styles/Auth.css';
 
 export default function Login() {
   const navigate = useNavigate();
-  const { login } = useUser();
+  const { login, isLoading, error } = useUser(); // Добавляем isLoading и error из контекста
   const [formData, setFormData] = useState({
-    email: '',
+    username: '', // меняем email на username
     password: ''
   });
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [formError, setFormError] = useState(''); // локальная ошибка формы
 
   const handleChange = (e) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value
     });
-    setError('');
+    setFormError('');
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    setError('');
+    setFormError('');
+
+    if (!formData.username.trim()) {
+      setFormError('Username is required');
+      return;
+    }
+
+    if (!formData.password.trim()) {
+      setFormError('Password is required');
+      return;
+    }
 
     try {
-      login(formData.email, formData.password);
+      await login(formData.username, formData.password);
       navigate('/');
     } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
+      // Ошибка уже установлена в контексте, можно отобразить ее
+      setFormError(err.message);
     }
   };
 
@@ -41,17 +48,21 @@ export default function Login() {
       <div className="auth-card">
         <h1>Sign In</h1>
         <form onSubmit={handleSubmit} className="auth-form">
-          {error && <div className="error-banner">{error}</div>}
+          {/* Показываем ошибки из контекста или локальные */}
+          {(error || formError) && (
+            <div className="error-banner">{error || formError}</div>
+          )}
 
           <div className="form-group">
-            <label>Email Address *</label>
+            <label>Username *</label> {/* Меняем label на Username */}
             <input
-              type="email"
-              name="email"
-              value={formData.email}
+              type="text" // меняем на text вместо email
+              name="username"
+              value={formData.username}
               onChange={handleChange}
-              placeholder="Enter your email"
+              placeholder="Enter your username"
               required
+              disabled={isLoading}
             />
           </div>
 
@@ -64,15 +75,20 @@ export default function Login() {
               onChange={handleChange}
               placeholder="Enter your password"
               required
+              disabled={isLoading}
             />
           </div>
 
           <div className="admin-hint">
-            <small>Admin login: admin@bmarket.com / admin123</small>
+            <small>Admin login: admin / admin123</small> {/* Обновляем подсказку */}
           </div>
 
-          <button type="submit" className="auth-button" disabled={loading}>
-            {loading ? 'Signing in...' : 'Sign In'}
+          <button 
+            type="submit" 
+            className="auth-button" 
+            disabled={isLoading}
+          >
+            {isLoading ? 'Signing in...' : 'Sign In'}
           </button>
         </form>
 
@@ -83,4 +99,3 @@ export default function Login() {
     </div>
   );
 }
-

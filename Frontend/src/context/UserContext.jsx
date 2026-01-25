@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 
 const UserContext = createContext();
 
@@ -12,232 +12,169 @@ export const useUser = () => {
 
 export const UserProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [addresses, setAddresses] = useState([]);
-  const [paymentMethods, setPaymentMethods] = useState([]);
-  const [reviews, setReviews] = useState([]);
-  const [refundRequests, setRefundRequests] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  useEffect(() => {
-    const savedUser = localStorage.getItem('user');
-    if (savedUser) {
-      setUser(JSON.parse(savedUser));
-    }
-    const savedAddresses = localStorage.getItem('addresses');
-    if (savedAddresses) {
-      setAddresses(JSON.parse(savedAddresses));
-    }
-    const savedPayments = localStorage.getItem('paymentMethods');
-    if (savedPayments) {
-      setPaymentMethods(JSON.parse(savedPayments));
-    }
-    const savedReviews = localStorage.getItem('reviews');
-    if (savedReviews) {
-      setReviews(JSON.parse(savedReviews));
-    }
-    const savedRefunds = localStorage.getItem('refundRequests');
-    if (savedRefunds) {
-      setRefundRequests(JSON.parse(savedRefunds));
-    }
-  }, []);
-
-  useEffect(() => {
-    if (user) {
-      localStorage.setItem('user', JSON.stringify(user));
-    } else {
-      localStorage.removeItem('user');
-    }
-  }, [user]);
-
-  useEffect(() => {
-    localStorage.setItem('addresses', JSON.stringify(addresses));
-  }, [addresses]);
-
-  useEffect(() => {
-    localStorage.setItem('paymentMethods', JSON.stringify(paymentMethods));
-  }, [paymentMethods]);
-
-  useEffect(() => {
-    localStorage.setItem('reviews', JSON.stringify(reviews));
-  }, [reviews]);
-
-  useEffect(() => {
-    localStorage.setItem('refundRequests', JSON.stringify(refundRequests));
-  }, [refundRequests]);
-
-  const register = (userData) => {
-    const existingUsers = JSON.parse(localStorage.getItem('users') || '[]');
-    if (existingUsers.find(u => u.email === userData.email)) {
-      throw new Error('Email already exists');
-    }
-
-    const newUser = {
-      id: Date.now(),
-      ...userData,
-      isSeller: false,
-      createdAt: new Date().toISOString()
-    };
-
-    existingUsers.push(newUser);
-    localStorage.setItem('users', JSON.stringify(existingUsers));
-    setUser(newUser);
-    return newUser;
-  };
-
-  const login = (email, password) => {
-    // Check for admin login
-    if (email === 'admin@bmarket.com' && password === 'admin123') {
-      const adminUser = {
-        id: 'admin',
-        name: 'Admin',
-        email: 'admin@bmarket.com',
-        isAdmin: true,
-        isSeller: false,
-        createdAt: new Date().toISOString()
+  // Регистрация через API
+  const register = async (userData) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      console.log('Registering user:', userData);
+      
+      const registrationData = {
+        user: {
+          userName: userData.name,
+          email: userData.email,
+          emailConfirmed: false,
+          phoneNumber: "+ 7 017",
+          phoneNumberConfirmed: false,
+          twoFactorEnabled: false 
+        }
       };
-      setUser(adminUser);
-      return adminUser;
-    }
 
-    const existingUsers = JSON.parse(localStorage.getItem('users') || '[]');
-    const foundUser = existingUsers.find(u => u.email === email && u.password === password);
-    
-    if (!foundUser) {
-      throw new Error('Invalid email or password');
-    }
+      const response = await fetch('http://localhost:5064/api/users', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(registrationData)
+      });
 
-    setUser(foundUser);
-    return foundUser;
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.log('Registration error response:', errorData);
+        
+        let errorMessage = 'Registration failed';
+        if (errorData.errors) {
+          errorMessage = Object.values(errorData.errors).flat().join(', ');
+        } else if (errorData.message) {
+          errorMessage = errorData.message;
+        } else if (errorData.title) {
+          errorMessage = errorData.title;
+        }
+        
+        throw new Error(errorMessage);
+      }
+
+      const responseData = await response.json();
+      console.log('Registration successful:', responseData);
+
+      // После регистрации пробуем залогиниться
+      try {
+        await login(userData.name, userData.password);
+        return responseData; // Исправлено: возвращаем responseData вместо newUser
+      } catch (loginError) {
+        console.log('Auto-login failed:', loginError);
+        throw new Error('Registration successful! Please login with your credentials.');
+      }
+      
+    } catch (err) {
+      console.error('Registration error:', err);
+      setError(err.message);
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const logout = () => {
+  // Логин через API
+  const login = async (username, password) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      console.log('Logging in:', username);
+      
+      const response = await fetch('http://localhost:5064/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: username,
+          password: password
+        })
+      });
+
+      const data = await response.json();
+      console.log('Login response:', data);
+      
+      if (!response.ok || !data.result || !data.token) {
+        let errorMessage = data.message || 'Login failed';
+        
+        if (data.isLockedOut) {
+          errorMessage = 'Account is locked out';
+        } else if (data.isNotAllowed) {
+          errorMessage = 'Login is not allowed';
+        } else if (data.requiresTwoFactor) {
+          errorMessage = 'Two-factor authentication required';
+        }
+        
+        throw new Error(errorMessage);
+      }
+
+      // Создаем объект пользователя
+      const userInfo = {
+        username: data.username,
+        token: data.token,
+        isAuthenticated: data.userInfo?.isAuthenticated || false,
+        claims: data.userInfo?.claims || [],
+        requiresTwoFactor: data.requiresTwoFactor || false
+      };
+
+      localStorage.setItem('authToken', data.token);
+
+      // Сохраняем только в состоянии React, не в localStorage
+      setUser(userInfo);
+      
+      console.log('Login successful:', userInfo);
+      return userInfo;
+      
+    } catch (err) {
+      console.error('Login error:', err);
+      setError(err.message);
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const getUserToken = () => {
+    return localStorage.getItem('authToken');
+  };
+
+  // Логаут
+  const logout = useCallback(() => {
     setUser(null);
-  };
-
-  const deleteAccount = (password) => {
-    if (user.password !== password) {
-      throw new Error('Incorrect password');
-    }
-
-    const orders = JSON.parse(localStorage.getItem('orders') || '[]');
-    const userOrders = orders.filter(o => o.userId === user.id);
-    
-    const archivedData = {
-      userId: user.id,
-      email: user.email,
-      orders: userOrders,
-      deletedAt: new Date().toISOString()
-    };
-
-    const archived = JSON.parse(localStorage.getItem('archivedUsers') || '[]');
-    archived.push(archivedData);
-    localStorage.setItem('archivedUsers', JSON.stringify(archived));
-
-    const existingUsers = JSON.parse(localStorage.getItem('users') || '[]');
-    const updatedUsers = existingUsers.filter(u => u.id !== user.id);
-    localStorage.setItem('users', JSON.stringify(updatedUsers));
-
-    setUser(null);
-    setAddresses([]);
-    setPaymentMethods([]);
-    localStorage.removeItem('addresses');
-    localStorage.removeItem('paymentMethods');
-  };
-
-  const addAddress = (address) => {
-    const newAddress = {
-      id: Date.now(),
-      ...address,
-      userId: user.id
-    };
-    setAddresses([...addresses, newAddress]);
-    return newAddress;
-  };
-
-  const updateAddress = (id, updatedAddress) => {
-    setAddresses(addresses.map(addr => 
-      addr.id === id ? { ...addr, ...updatedAddress } : addr
-    ));
-  };
-
-  const deleteAddress = (id) => {
-    setAddresses(addresses.filter(addr => addr.id !== id));
-  };
-
-  const addPaymentMethod = (payment) => {
-    const newPayment = {
-      id: Date.now(),
-      ...payment,
-      userId: user.id
-    };
-    setPaymentMethods([...paymentMethods, newPayment]);
-    return newPayment;
-  };
-
-  const updatePaymentMethod = (id, updatedPayment) => {
-    setPaymentMethods(paymentMethods.map(pm => 
-      pm.id === id ? { ...pm, ...updatedPayment } : pm
-    ));
-  };
-
-  const deletePaymentMethod = (id) => {
-    setPaymentMethods(paymentMethods.filter(pm => pm.id !== id));
-  };
-
-  const registerAsSeller = () => {
-    const updatedUser = { ...user, isSeller: true };
-    const existingUsers = JSON.parse(localStorage.getItem('users') || '[]');
-    const updatedUsers = existingUsers.map(u => 
-      u.id === user.id ? updatedUser : u
-    );
-    localStorage.setItem('users', JSON.stringify(updatedUsers));
-    setUser(updatedUser);
-  };
-
-  const addReview = (review) => {
-    const newReview = {
-      id: Date.now(),
-      ...review,
-      userId: user.id,
-      userName: user.name,
-      createdAt: new Date().toISOString()
-    };
-    setReviews([...reviews, newReview]);
-    return newReview;
-  };
-
-  const submitRefundRequest = (request) => {
-    const newRequest = {
-      id: Date.now(),
-      ...request,
-      userId: user.id,
-      status: 'Pending',
-      createdAt: new Date().toISOString()
-    };
-    setRefundRequests([...refundRequests, newRequest]);
-    return newRequest;
-  };
+    setError(null);
+  }, []);
 
   const value = {
     user,
-    addresses,
-    paymentMethods,
-    reviews,
-    refundRequests,
+    isLoading,
+    error,
+    isAuthenticated: !!localStorage.getItem('authToken'),
     register,
     login,
     logout,
-    deleteAccount,
-    addAddress,
-    updateAddress,
-    deleteAddress,
-    addPaymentMethod,
-    updatePaymentMethod,
-    deletePaymentMethod,
-    registerAsSeller,
-    addReview,
-    submitRefundRequest,
+    getUserToken,
+    
+    // Заглушки для совместимости
+    addresses: [],
+    paymentMethods: [],
+    reviews: [],
+    refundRequests: [],
+    deleteAccount: () => { throw new Error('Not implemented via API yet'); },
+    addAddress: () => { throw new Error('Not implemented via API yet'); },
+    updateAddress: () => { throw new Error('Not implemented via API yet'); },
+    deleteAddress: () => { throw new Error('Not implemented via API yet'); },
+    addPaymentMethod: () => { throw new Error('Not implemented via API yet'); },
+    updatePaymentMethod: () => { throw new Error('Not implemented via API yet'); },
+    deletePaymentMethod: () => { throw new Error('Not implemented via API yet'); },
+    registerAsSeller: () => { throw new Error('Not implemented via API yet'); },
+    addReview: () => { throw new Error('Not implemented via API yet'); },
+    submitRefundRequest: () => { throw new Error('Not implemented via API yet'); },
   };
 
   return <UserContext.Provider value={value}>{children}</UserContext.Provider>;
 };
-

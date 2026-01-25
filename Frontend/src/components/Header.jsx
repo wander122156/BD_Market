@@ -6,12 +6,13 @@ import '../styles/Header.css';
 
 export default function Header() {
   const { getCartItemsCount } = useCart();
-  const { user, logout } = useUser();
+  const { isAuthenticated, logout } = useUser(); // Убрали user из деструктуризации
   const { searchQuery, setSearchQuery } = useSearch();
   const navigate = useNavigate();
 
   const handleLogout = () => {
     logout();
+    navigate('/login');
   };
 
   const handleSearchChange = (e) => {
@@ -48,24 +49,12 @@ export default function Header() {
         
         <nav className="nav">
           <Link to="/" className="nav-link">Home</Link>
-          {user && <Link to="/orders" className="nav-link">My Orders</Link>}
-          {user && user.isAdmin && (
-            <Link to="/admin/products" className="nav-link admin-link">Admin Panel</Link>
-          )}
+          {isAuthenticated && <Link to="/orders" className="nav-link">My Orders</Link>}
         </nav>
 
         <div className="header-right">
-          {user ? (
-            <>
-              <Link to="/profile" className="account-link">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                  <circle cx="12" cy="7" r="4"></circle>
-                </svg>
-                <span>{user.name}</span>
-              </Link>
-              <button onClick={handleLogout} className="logout-btn">Logout</button>
-            </>
+          {isAuthenticated ? (
+            <button onClick={handleLogout} className="logout-btn">Logout</button>
           ) : (
             <Link to="/login" className="login-link">Sign In</Link>
           )}
