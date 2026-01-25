@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using System.Text;
 using Backend_BD.AppCore;
 using Backend_BD.AppCore.Interfaces;
@@ -54,34 +55,29 @@ builder.Services.AddAuthentication(options =>
             ValidateIssuerSigningKey = true,
             IssuerSigningKey = new SymmetricSecurityKey(
                 Encoding.UTF8.GetBytes(AuthorizationConstants.JWT_SECRET_KEY)),
-            ValidateIssuer = true,
-            ValidIssuer = AuthorizationConstants.JWT_ISSUER,
-            ValidateAudience = true,
-            ValidAudience = AuthorizationConstants.JWT_AUDIENCE,
+        
+            ValidateIssuer = false,  
+            ValidateAudience = false, 
+        
             ValidateLifetime = true,
             ClockSkew = TimeSpan.Zero,
-            RequireExpirationTime = true
+        
+            RequireExpirationTime = true,
+        
+            NameClaimType = ClaimTypes.Name,
+            RoleClaimType = ClaimTypes.Role
         };
     
         options.Events = new JwtBearerEvents
         {
             OnAuthenticationFailed = context =>
             {
-                if (context.Exception.GetType() == typeof(SecurityTokenExpiredException))
-                {
-                    context.Response.Headers.Add("Token-Expired", "true");
-                }
+                Console.WriteLine($"JWT Authentication Failed: {context.Exception.Message}");
                 return Task.CompletedTask;
             },
-            OnMessageReceived = context =>
+            OnTokenValidated = context =>
             {
-                var accessToken = context.Request.Query["access_token"];
-                var path = context.HttpContext.Request.Path;
-            
-                if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs"))
-                {
-                    context.Token = accessToken;
-                }
+                Console.WriteLine($"JWT Token Validated for user: {context.Principal?.Identity?.Name}");
                 return Task.CompletedTask;
             }
         };
