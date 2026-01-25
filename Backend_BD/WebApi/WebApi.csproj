@@ -70,6 +70,9 @@
       <Compile Update="OrderEndpoints\ListOrdersEndpoint.ListOrdersResponse.cs">
         <DependentUpon>ListOrdersEndpoint.cs</DependentUpon>
       </Compile>
+      <Compile Update="OrderEndpoints\GetOrderByIdEndpoint.GetOrderByIdResponse.cs">
+        <DependentUpon>GetOrderByIdEndpoint.cs</DependentUpon>
+      </Compile>
     </ItemGroup>
 
 </Project>

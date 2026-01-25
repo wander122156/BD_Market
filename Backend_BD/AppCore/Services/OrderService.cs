@@ -52,7 +52,6 @@ public class OrderService(
         
         await orderRepository.AddAsync(order);
 
-        // Очистка корзины после создания заказа
         await basketRepository.DeleteAsync(basket);
 
         logger.LogInformation(
