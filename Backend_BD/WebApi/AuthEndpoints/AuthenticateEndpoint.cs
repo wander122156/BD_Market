@@ -31,6 +31,17 @@ public class AuthenticateEndpoint(
         logger.LogInformation("Authenticating {Username}. CorrelationId: {CorrelationId}",
             req.Username, response.CorrelationId);
 
+        if (string.IsNullOrWhiteSpace(req.Username))
+        {
+            logger.LogWarning("Empty username received. CorrelationId: {CorrelationId}", 
+                response.CorrelationId);
+        
+            response.Result = false;
+            response.Username = "";
+            await Send.ErrorsAsync(400, ct);
+            return;
+        }
+        
         var result = await signInManager.PasswordSignInAsync(
             req.Username, req.Password, false, lockoutOnFailure: true);
 

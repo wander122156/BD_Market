@@ -81,6 +81,18 @@
       <Compile Update="AuthEndpoints\AuthenticateEndpoint.AuthenticateResponse.cs">
         <DependentUpon>AuthenticateEndpoint.cs</DependentUpon>
       </Compile>
+      <Compile Update="UserManagementEndpoints\CreateUserEndpoint.CreateUserRequest.cs">
+        <DependentUpon>CreateUserEndpoint.cs</DependentUpon>
+      </Compile>
+      <Compile Update="UserManagementEndpoints\CreateUserEndpoint.CreateUserResponse.cs">
+        <DependentUpon>CreateUserEndpoint.cs</DependentUpon>
+      </Compile>
+      <Compile Update="UserManagementEndpoints\UserGetByIdEndpoint.GetByIdUserRequest.cs">
+        <DependentUpon>UserGetByIdEndpoint.cs</DependentUpon>
+      </Compile>
+      <Compile Update="UserManagementEndpoints\CreateUserDto.cs">
+        <DependentUpon>CreateUserEndpoint.cs</DependentUpon>
+      </Compile>
     </ItemGroup>
 
 </Project>

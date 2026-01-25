@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Backend_BD.Infrastructure.Migrations
 {
     [DbContext(typeof(CatalogContext))]
-    [Migration("20260125012340_AddOrdersAndBaskets")]
-    partial class AddOrdersAndBaskets
+    [Migration("20260125065114_InitialCreateWithIdentity")]
+    partial class InitialCreateWithIdentity
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
