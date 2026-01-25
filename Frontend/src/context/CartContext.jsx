@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
 
 const CartContext = createContext();
 
@@ -17,11 +17,63 @@ export const CartProvider = ({ children }) => {
     const [orders, setOrders] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
+    const isFetchingRef = useRef(false); 
 
-    // Загрузка корзины с сервера при монтировании
     useEffect(() => {
         fetchCart();
         fetchOrders();
+    }, []);
+
+    const getOrderById = useCallback(async (orderId) => {
+        if (isFetchingRef.current) {
+            return;
+        }
+        
+        setIsLoading(true);
+        setError(null);
+        isFetchingRef.current = true;
+        
+        try {
+            const response = await fetch(`http://localhost:5064/api/orders/${orderId}`);
+            
+            if (!response.ok) {
+                if (response.status === 404) {
+                    throw new Error('Order not found');
+                }
+                throw new Error('Failed to fetch order');
+            }
+            
+            const responseData = await response.json();
+            const orderData = responseData.order;
+            
+            if (!orderData) {
+                throw new Error('Invalid order data format');
+            }
+            
+            return {
+                id: orderData.id,
+                buyerId: orderData.buyerId,
+                orderDate: orderData.orderDate,
+                total: orderData.total,
+                shippingAddress: orderData.shipToAddress,
+                items: orderData.items?.map(item => ({
+                    id: item.id,
+                    catalogItemId: item.catalogItemId,
+                    name: item.productName,
+                    unitPrice: item.unitPrice,
+                    quantity: item.units,
+                    pictureUrl: item.pictureUrl
+                })) || [],
+                status: 'Processing'
+            };
+            
+        } catch (err) {
+            setError(err.message);
+            throw err;
+        } finally {
+            setIsLoading(false);
+            isFetchingRef.current = false;
+        }
     }, []);
 
     const fetchOrders = async () => {
@@ -76,7 +128,6 @@ export const CartProvider = ({ children }) => {
         }
     };
 
-    // Функция для загрузки корзины с сервера
     const fetchCart = async () => {
         setIsLoading(true);
         setError(null);
@@ -84,7 +135,6 @@ export const CartProvider = ({ children }) => {
             const response = await fetch('http://localhost:5064/api/basket');
             if (!response.ok) {
                 if (response.status === 404) {
-                    // Корзина не найдена - создастся при первом добавлении
                     setCartItems([]);
                     return;
                 }
@@ -113,7 +163,6 @@ export const CartProvider = ({ children }) => {
         }
     };
 
-    // Добавление товара в корзину через API
     const addToCart = async (product) => {
         setIsLoading(true);
         setError(null);
@@ -143,7 +192,6 @@ export const CartProvider = ({ children }) => {
         }
     };
 
-    // Удаление товара из корзины
     const removeFromCart = async (basketItemId) => {
         setIsLoading(true);
         setError(null);
@@ -165,7 +213,6 @@ export const CartProvider = ({ children }) => {
         }
     };
 
-    // Обновление количества товара
     const updateQuantity = async (basketItemId, newQuantity) => {
         if (newQuantity <= 0) {
             await removeFromCart(basketItemId);
@@ -196,7 +243,6 @@ export const CartProvider = ({ children }) => {
         }
     };
 
-    // Очистка корзины
     const clearCart = async () => {
         setIsLoading(true);
         setError(null);
@@ -215,16 +261,14 @@ export const CartProvider = ({ children }) => {
         }
     };
 
-    // Создание заказа через API
     const placeOrder = async (orderDetails) => {
         setIsLoading(true);
         setError(null);
         try {
-            // Подготавливаем данные для API
             const orderRequest = {
                 street: orderDetails.address,
                 city: orderDetails.city,
-                state: orderDetails.state || '', // если state может быть не обязательным
+                state: orderDetails.state || '',
                 country: orderDetails.country,
                 zipCode: orderDetails.zipCode
             };
@@ -243,9 +287,8 @@ export const CartProvider = ({ children }) => {
 
             const orderData = await response.json();
             
-            // Создаем объект заказа для локального состояния
             const order = {
-                id: orderData.id || Date.now(), // Используем ID из API или временный
+                id: orderData.id || Date.now(),
                 items: cartItems,
                 total: getCartTotal(),
                 ...orderDetails,
@@ -254,10 +297,8 @@ export const CartProvider = ({ children }) => {
                 estimatedDelivery: new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString(),
             };
 
-            // Обновляем локальное состояние заказов
             setOrders((prevOrders) => [order, ...prevOrders]);
             
-            // Очищаем корзину после успешного оформления заказа
             await clearCart();
             
             return order;
@@ -265,7 +306,7 @@ export const CartProvider = ({ children }) => {
         } catch (err) {
             setError(err.message);
             console.error('Error placing order:', err);
-            throw err; // Пробрасываем ошибку дальше для обработки в компоненте
+            throw err;
         } finally {
             setIsLoading(false);
         }
@@ -293,6 +334,7 @@ export const CartProvider = ({ children }) => {
         placeOrder,
         isLoading,
         error,
+        getOrderById,
         refreshCart: fetchCart
     };
 

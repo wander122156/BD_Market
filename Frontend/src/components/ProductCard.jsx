@@ -6,7 +6,6 @@ export default function ProductCard({ product }) {
   const { addToCart, cartItems, removeFromCart, updateQuantity, isLoading } = useCart();
   const discount = Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100);
 
-  // ИСПРАВЛЕНО: Ищем по catalogItemId, а не по id
   const cartItem = cartItems.find(item => item.catalogItemId === product.id);
   const isInCart = !!cartItem;
   const quantityInCart = cartItem?.quantity || 0;
@@ -17,7 +16,6 @@ export default function ProductCard({ product }) {
     addToCart(product);
   };
 
-  // ИСПРАВЛЕНО: Используем basketItemId для удаления
   const handleRemoveFromCart = (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -30,7 +28,6 @@ export default function ProductCard({ product }) {
     e.preventDefault();
     e.stopPropagation();
     if (isInCart) {
-      // ИСПРАВЛЕНО: Используем basketItemId для обновления
       updateQuantity(cartItem.basketItemId, quantityInCart + 1);
     } else {
       addToCart(product);
@@ -41,10 +38,8 @@ export default function ProductCard({ product }) {
     e.preventDefault();
     e.stopPropagation();
     if (quantityInCart > 1) {
-      // ИСПРАВЛЕНО: Используем basketItemId для обновления
       updateQuantity(cartItem.basketItemId, quantityInCart - 1);
     } else if (cartItem) {
-      // ИСПРАВЛЕНО: Используем basketItemId для удаления
       removeFromCart(cartItem.basketItemId);
     }
   };
@@ -60,7 +55,6 @@ export default function ProductCard({ product }) {
                   className="product-image"
                   loading="lazy"
                   onError={(e) => {
-                    // Fallback if primary image fails
                     const fallbackUrl = `https://via.placeholder.com/400x400/e5e7eb/9ca3af?text=${encodeURIComponent(product.name.substring(0, 20))}`;
                     if (e.target.src !== fallbackUrl) {
                       e.target.src = fallbackUrl;

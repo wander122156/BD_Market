@@ -6,7 +6,6 @@ export default function Cart() {
   const { cartItems, updateQuantity, removeFromCart, getCartTotal, clearCart, isLoading, error } = useCart();
   const navigate = useNavigate();
 
-  // Показываем загрузку
   if (isLoading && cartItems.length === 0) {
     return (
         <div className="cart">
@@ -19,7 +18,6 @@ export default function Cart() {
     );
   }
 
-  // Показываем ошибку
   if (error) {
     return (
         <div className="cart">
@@ -69,7 +67,6 @@ export default function Cart() {
                     <div className="cart-item-info">
                       <h3>{item.name}</h3>
                       <p className="cart-item-price">${item.price.toFixed(2)}</p>
-                      {/* Убрано deliveryTime - его нет в API */}
                     </div>
                     <div className="cart-item-controls">
                       <div className="quantity-controls">
@@ -127,7 +124,6 @@ export default function Cart() {
               </button>
               <Link to="/" className="continue-shopping-link">Continue Shopping</Link>
 
-              {/* Опционально: кнопка очистки корзины */}
               {cartItems.length > 0 && (
                   <button
                       onClick={clearCart}

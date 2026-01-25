@@ -14,7 +14,6 @@ export default function Home() {
   const [sortBy, setSortBy] = useState('default');
   const [displayedProducts, setDisplayedProducts] = useState([]);
 
-  // Calculate max price from products
   useEffect(() => {
     if (products.length > 0) {
       const maxProductPrice = Math.max(...products.map(p => p.price));
@@ -22,7 +21,6 @@ export default function Home() {
     }
   }, [products]);
 
-  // Shuffle products for random display
   useEffect(() => {
     if (products.length > 0) {
       const shuffled = [...products].sort(() => Math.random() - 0.5);
@@ -148,9 +146,7 @@ export default function Home() {
           </div>
         </aside>
 
-        {/* Main Content */}
         <main className="home-main">
-          {/* Products Grid */}
           <div className="products-section">
             <div className="products-header">
               <h2>

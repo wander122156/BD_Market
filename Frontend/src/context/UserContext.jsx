@@ -17,7 +17,6 @@ export const UserProvider = ({ children }) => {
   const [reviews, setReviews] = useState([]);
   const [refundRequests, setRefundRequests] = useState([]);
 
-  // Load user data from localStorage on mount
   useEffect(() => {
     const savedUser = localStorage.getItem('user');
     if (savedUser) {
@@ -41,7 +40,6 @@ export const UserProvider = ({ children }) => {
     }
   }, []);
 
-  // Save to localStorage when data changes
   useEffect(() => {
     if (user) {
       localStorage.setItem('user', JSON.stringify(user));
@@ -67,7 +65,6 @@ export const UserProvider = ({ children }) => {
   }, [refundRequests]);
 
   const register = (userData) => {
-    // Check if email already exists
     const existingUsers = JSON.parse(localStorage.getItem('users') || '[]');
     if (existingUsers.find(u => u.email === userData.email)) {
       throw new Error('Email already exists');
@@ -101,7 +98,6 @@ export const UserProvider = ({ children }) => {
       return adminUser;
     }
 
-    // Regular user login
     const existingUsers = JSON.parse(localStorage.getItem('users') || '[]');
     const foundUser = existingUsers.find(u => u.email === email && u.password === password);
     
@@ -122,7 +118,6 @@ export const UserProvider = ({ children }) => {
       throw new Error('Incorrect password');
     }
 
-    // Archive order data (for financial statements)
     const orders = JSON.parse(localStorage.getItem('orders') || '[]');
     const userOrders = orders.filter(o => o.userId === user.id);
     
@@ -137,12 +132,10 @@ export const UserProvider = ({ children }) => {
     archived.push(archivedData);
     localStorage.setItem('archivedUsers', JSON.stringify(archived));
 
-    // Remove user from active users
     const existingUsers = JSON.parse(localStorage.getItem('users') || '[]');
     const updatedUsers = existingUsers.filter(u => u.id !== user.id);
     localStorage.setItem('users', JSON.stringify(updatedUsers));
 
-    // Clear user data
     setUser(null);
     setAddresses([]);
     setPaymentMethods([]);

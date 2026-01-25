@@ -32,7 +32,6 @@ export default function Register() {
       ...formData,
       [e.target.name]: e.target.value
     });
-    // Clear error when user starts typing
     if (errors[e.target.name]) {
       setErrors({
         ...errors,
@@ -45,19 +44,16 @@ export default function Register() {
     e.preventDefault();
     const newErrors = {};
 
-    // Name validation
     if (!formData.name.trim()) {
       newErrors.name = 'Name is required';
     }
 
-    // Email validation
     if (!formData.email.trim()) {
       newErrors.email = 'Email is required';
     } else if (!validateEmail(formData.email)) {
       newErrors.email = 'Invalid email format';
     }
 
-    // Password validation
     const passwordValidation = validatePassword(formData.password);
     if (!formData.password) {
       newErrors.password = 'Password is required';
@@ -69,7 +65,6 @@ export default function Register() {
       newErrors.password = 'Password must contain at least one special character';
     }
 
-    // Confirm password validation
     if (!formData.confirmPassword) {
       newErrors.confirmPassword = 'Please confirm your password';
     } else if (formData.password !== formData.confirmPassword) {

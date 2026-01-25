@@ -17,7 +17,6 @@ export default function Header() {
   const handleSearchChange = (e) => {
     const query = e.target.value;
     setSearchQuery(query);
-    // Navigate to home if not already there
     if (window.location.pathname !== '/') {
       navigate('/');
     }

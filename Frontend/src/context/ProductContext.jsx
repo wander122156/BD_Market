@@ -33,7 +33,6 @@ export const ProductProvider = ({ children }) => {
 
       console.log('Backend response:', data);
 
-      // Backend может вернуть: data.catalogItems или data.CatalogItems
       let items = data.catalogItems || data.CatalogItems || [];
 
       if (!Array.isArray(items)) {
@@ -47,8 +46,8 @@ export const ProductProvider = ({ children }) => {
         id: item.id,
         name: item.name || 'Unknown Product',
         description: item.description || 'No description available',
-        price: parseFloat(item.price) || 0,  // ← Конвертируем в число
-        originalPrice: parseFloat(item.price) * 1.2 || 0,  // ← Добавляем 20%
+        price: parseFloat(item.price) || 0,
+        originalPrice: parseFloat(item.price) * 1.2 || 0,
         image: item.pictureUri
             ? `http://localhost:5064${item.pictureUri}`
             : null,
@@ -124,7 +123,7 @@ export const ProductProvider = ({ children }) => {
     updateProduct,
     deleteProduct,
     getProductById,
-    fetchProducts, // Чтобы можно было перезагрузить
+    fetchProducts,
   };
 
   return <ProductContext.Provider value={value}>{children}</ProductContext.Provider>;

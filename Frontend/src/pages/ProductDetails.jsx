@@ -132,7 +132,6 @@ export default function ProductDetails() {
         </div>
       </div>
 
-      {/* Reviews Section */}
       <div className="reviews-section">
         <div className="reviews-header">
           <h2>Customer Reviews</h2>

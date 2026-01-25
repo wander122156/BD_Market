@@ -1,19 +1,61 @@
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useState, useEffect, useRef } from 'react';
 import { useCart } from '../context/CartContext';
 import '../styles/OrderConfirmation.css';
 
 export default function OrderConfirmation() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { orders } = useCart();
+  const { getOrderById, isLoading } = useCart();
+  const [order, setOrder] = useState(null);
+  const [error, setError] = useState(null);
   
-  const order = orders.find((o) => o.id === parseInt(id));
+  const hasLoadedRef = useRef(false);
 
-  if (!order) {
+  useEffect(() => {
+    if (hasLoadedRef.current || !id) {
+      return;
+    }
+    
+    console.log('Загрузка заказа с ID:', id);
+    
+    const loadOrder = async () => {
+      try {
+        hasLoadedRef.current = true;
+        console.log('Начинаем загрузку заказа...');
+        const orderData = await getOrderById(id);
+        console.log('Заказ получен:', orderData);
+        setOrder(orderData);
+      } catch (err) {
+        console.error('Ошибка загрузки заказа:', err);
+        setError(err.message);
+      }
+    };
+
+    loadOrder();
+    
+    return () => {
+      console.log('Очистка useEffect');
+      hasLoadedRef.current = false;
+    };
+  }, [id, getOrderById]);
+
+  if (isLoading) {
+    return (
+      <div className="order-confirmation">
+        <div className="loading">
+          <h2>Loading order details...</h2>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !order) {
     return (
       <div className="order-confirmation">
         <div className="not-found">
           <h2>Order not found</h2>
+          <p>{error}</p>
           <Link to="/">Go to Home</Link>
         </div>
       </div>
