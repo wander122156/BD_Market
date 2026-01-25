@@ -10,6 +10,8 @@
     <ItemGroup>
       <PackageReference Include="FastEndpoints" Version="7.2.0" />
       <PackageReference Include="FastEndpoints.Swagger" Version="7.2.0" />
+      <PackageReference Include="Microsoft.AspNetCore.Authentication.Cookies" Version="2.3.9" />
+      <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.12" />
       <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.12">
         <PrivateAssets>all</PrivateAssets>
         <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -72,6 +74,12 @@
       </Compile>
       <Compile Update="OrderEndpoints\GetOrderByIdEndpoint.GetOrderByIdResponse.cs">
         <DependentUpon>GetOrderByIdEndpoint.cs</DependentUpon>
+      </Compile>
+      <Compile Update="AuthEndpoints\AuthenticateEndpoint.AuthenticateRequest.cs">
+        <DependentUpon>AuthenticateEndpoint.cs</DependentUpon>
+      </Compile>
+      <Compile Update="AuthEndpoints\AuthenticateEndpoint.AuthenticateResponse.cs">
+        <DependentUpon>AuthenticateEndpoint.cs</DependentUpon>
       </Compile>
     </ItemGroup>
 
