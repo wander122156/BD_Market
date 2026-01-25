@@ -61,6 +61,12 @@
       <Compile Update="BasketEndpoints\DeleteBasketItemEndpoint.DeleteBasketItemResponse.cs">
         <DependentUpon>DeleteBasketItemEndpoint.cs</DependentUpon>
       </Compile>
+      <Compile Update="OrderEndpoints\CreateOrderEndpoint.CreateOrderRequest.cs">
+        <DependentUpon>CreateOrderEndpoint.cs</DependentUpon>
+      </Compile>
+      <Compile Update="OrderEndpoints\CreateOrderEndpoint.CreateOrderResponse.cs">
+        <DependentUpon>CreateOrderEndpoint.cs</DependentUpon>
+      </Compile>
     </ItemGroup>
 
 </Project>
