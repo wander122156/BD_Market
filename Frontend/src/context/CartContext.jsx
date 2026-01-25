@@ -12,6 +12,8 @@ export const useCart = () => {
 
 export const CartProvider = ({ children }) => {
     const [cartItems, setCartItems] = useState([]);
+    const [basketId, setBasketId] = useState(null); // Храним ID корзины
+    const [buyerId, setBuyerId] = useState(null);
     const [orders, setOrders] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
@@ -28,18 +30,29 @@ export const CartProvider = ({ children }) => {
         try {
             const response = await fetch('http://localhost:5064/api/basket');
             if (!response.ok) {
+                if (response.status === 404) {
+                    // Корзина не найдена - создастся при первом добавлении
+                    setCartItems([]);
+                    return;
+                }
                 throw new Error('Failed to fetch cart');
             }
-            const basketData = await response.json();
-            // Преобразуем данные API в формат, совместимый с нашим приложением
-            const formattedItems = basketData.items.map(item => ({
-                id: item.catalogItemId, // Используем catalogItemId как id товара
-                catalogItemId: item.catalogItemId,
-                name: item.productName || `Товар ${item.catalogItemId}`,
+            const data = await response.json();
+
+            // Сохраняем данные корзины
+            setBasketId(data.basketId);
+            setBuyerId(data.buyerId);
+
+            // ВАЖНО: используем item.id (basketItemId), не catalogItemId!
+            const formattedItems = data.items.map(item => ({
+                basketItemId: item.id, // ID записи в корзине для удаления/обновления
+                catalogItemId: item.catalogItemId, // ID товара из каталога
+                name: item.productName,
                 price: item.unitPrice,
                 quantity: item.quantity,
-                pictureUri: item.pictureUri
+                pictureUrl: item.pictureUrl // Теперь это полный URL!
             }));
+
             setCartItems(formattedItems);
         } catch (err) {
             setError(err.message);
@@ -80,40 +93,80 @@ export const CartProvider = ({ children }) => {
         }
     };
 
-    // Временные заглушки для функций, которые пока не поддерживаются API
-    const removeFromCart = async (productId) => {
-        console.log('Remove from cart function is temporarily disabled');
-        // TODO: Реализовать когда будет доступен API endpoint
-        // await fetch(`http://localhost:5064/api/basket/items/${productId}`, {
-        //   method: 'DELETE'
-        // });
-        // await fetchCart();
+    // Удаление товара из корзины
+    const removeFromCart = async (basketItemId) => {
+        setIsLoading(true);
+        setError(null);
+        try {
+            const response = await fetch(`http://localhost:5064/api/basket/items/${basketItemId}`, {
+                method: 'DELETE'
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to remove item from cart');
+            }
+
+            // Обновляем корзину после удаления
+            await fetchCart();
+        } catch (err) {
+            setError(err.message);
+            console.error('Error removing from cart:', err);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
-    const updateQuantity = async (productId, quantity) => {
-        console.log('Update quantity function is temporarily disabled');
-        // TODO: Реализовать когда будет доступен API endpoint
-        // if (quantity <= 0) {
-        //   await removeFromCart(productId);
-        //   return;
-        // }
-        // await fetch(`http://localhost:5064/api/basket/items/${productId}`, {
-        //   method: 'PUT',
-        //   headers: {
-        //     'Content-Type': 'application/json',
-        //   },
-        //   body: JSON.stringify({ quantity })
-        // });
-        // await fetchCart();
+    // Обновление количества товара
+    const updateQuantity = async (basketItemId, newQuantity) => {
+        // Если количество 0 или меньше - удаляем товар
+        if (newQuantity <= 0) {
+            await removeFromCart(basketItemId);
+            return;
+        }
+
+        setIsLoading(true);
+        setError(null);
+        try {
+            const response = await fetch(`http://localhost:5064/api/basket/items/${basketItemId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ quantity: newQuantity })
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to update quantity');
+            }
+
+            // Обновляем корзину после изменения
+            await fetchCart();
+        } catch (err) {
+            setError(err.message);
+            console.error('Error updating quantity:', err);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
-    const clearCart = () => {
-        console.log('Clear cart function is temporarily disabled');
-        // TODO: Реализовать когда будет доступен API endpoint
-        // await fetch('http://localhost:5064/api/basket', {
-        //   method: 'DELETE'
-        // });
-        // setCartItems([]);
+    // Очистка корзины (удаление всех товаров по одному)
+    const clearCart = async () => {
+        setIsLoading(true);
+        setError(null);
+        try {
+            // Удаляем все товары по одному
+            for (const item of cartItems) {
+                await fetch(`http://localhost:5064/api/basket/items/${item.basketItemId}`, {
+                    method: 'DELETE'
+                });
+            }
+            setCartItems([]);
+        } catch (err) {
+            setError(err.message);
+            console.error('Error clearing cart:', err);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const getCartTotal = () => {
@@ -132,7 +185,7 @@ export const CartProvider = ({ children }) => {
             ...orderDetails,
             status: 'Processing',
             orderDate: new Date().toISOString(),
-            estimatedDelivery: new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString(), // 4 hours from now
+            estimatedDelivery: new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString(),
         };
         setOrders((prevOrders) => {
             const updatedOrders = [order, ...prevOrders];
@@ -145,6 +198,8 @@ export const CartProvider = ({ children }) => {
 
     const value = {
         cartItems,
+        basketId,
+        buyerId,
         addToCart,
         removeFromCart,
         updateQuantity,
@@ -155,7 +210,7 @@ export const CartProvider = ({ children }) => {
         placeOrder,
         isLoading,
         error,
-        refreshCart: fetchCart // Добавляем функцию для ручного обновления корзины
+        refreshCart: fetchCart
     };
 
     return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
