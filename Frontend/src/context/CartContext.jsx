@@ -12,7 +12,7 @@ export const useCart = () => {
 
 export const CartProvider = ({ children }) => {
     const [cartItems, setCartItems] = useState([]);
-    const [basketId, setBasketId] = useState(null); // Храним ID корзины
+    const [basketId, setBasketId] = useState(null);
     const [buyerId, setBuyerId] = useState(null);
     const [orders, setOrders] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
@@ -21,7 +21,60 @@ export const CartProvider = ({ children }) => {
     // Загрузка корзины с сервера при монтировании
     useEffect(() => {
         fetchCart();
+        fetchOrders();
     }, []);
+
+    const fetchOrders = async () => {
+        setIsLoading(true);
+        setError(null);
+        try {
+            const response = await fetch('http://localhost:5064/api/orders');
+            
+            if (!response.ok) {
+                if (response.status === 404) {
+                    setOrders([]);
+                    return;
+                }
+                throw new Error('Failed to fetch orders');
+            }
+            
+            const data = await response.json();
+            
+            const ordersArray = data.orders || [];
+            
+            const formattedOrders = ordersArray.map(order => ({
+                id: order.id,
+                buyerId: order.buyerId,
+                orderDate: order.orderDate,
+                total: order.total,
+                shippingAddress: order.shipToAddress || {
+                    street: order.street || '',
+                    city: order.city || '',
+                    state: order.state || '',
+                    country: order.country || '',
+                    zipCode: order.zipCode || ''
+                },
+                items: order.items?.map(item => ({
+                    id: item.id,
+                    catalogItemId: item.catalogItemId,
+                    name: item.productName,
+                    unitPrice: item.unitPrice,
+                    quantity: item.units || item.quantity || 1,
+                    pictureUrl: item.pictureUrl
+                })) || [],
+                status: 'Processing'
+            }));
+
+            setOrders(formattedOrders);
+            
+        } catch (err) {
+            setError(err.message);
+            console.error('Error fetching orders:', err);
+            setOrders([]);
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     // Функция для загрузки корзины с сервера
     const fetchCart = async () => {
@@ -39,18 +92,16 @@ export const CartProvider = ({ children }) => {
             }
             const data = await response.json();
 
-            // Сохраняем данные корзины
             setBasketId(data.basketId);
             setBuyerId(data.buyerId);
 
-            // ВАЖНО: используем item.id (basketItemId), не catalogItemId!
             const formattedItems = data.items.map(item => ({
-                basketItemId: item.id, // ID записи в корзине для удаления/обновления
-                catalogItemId: item.catalogItemId, // ID товара из каталога
+                basketItemId: item.id,
+                catalogItemId: item.catalogItemId,
                 name: item.productName,
                 price: item.unitPrice,
                 quantity: item.quantity,
-                pictureUrl: item.pictureUrl // Теперь это полный URL!
+                pictureUrl: item.pictureUrl
             }));
 
             setCartItems(formattedItems);
@@ -83,7 +134,6 @@ export const CartProvider = ({ children }) => {
                 throw new Error('Failed to add item to cart');
             }
 
-            // После успешного добавления обновляем корзину
             await fetchCart();
         } catch (err) {
             setError(err.message);
@@ -106,7 +156,6 @@ export const CartProvider = ({ children }) => {
                 throw new Error('Failed to remove item from cart');
             }
 
-            // Обновляем корзину после удаления
             await fetchCart();
         } catch (err) {
             setError(err.message);
@@ -118,7 +167,6 @@ export const CartProvider = ({ children }) => {
 
     // Обновление количества товара
     const updateQuantity = async (basketItemId, newQuantity) => {
-        // Если количество 0 или меньше - удаляем товар
         if (newQuantity <= 0) {
             await removeFromCart(basketItemId);
             return;
@@ -139,7 +187,6 @@ export const CartProvider = ({ children }) => {
                 throw new Error('Failed to update quantity');
             }
 
-            // Обновляем корзину после изменения
             await fetchCart();
         } catch (err) {
             setError(err.message);
@@ -149,12 +196,11 @@ export const CartProvider = ({ children }) => {
         }
     };
 
-    // Очистка корзины (удаление всех товаров по одному)
+    // Очистка корзины
     const clearCart = async () => {
         setIsLoading(true);
         setError(null);
         try {
-            // Удаляем все товары по одному
             for (const item of cartItems) {
                 await fetch(`http://localhost:5064/api/basket/items/${item.basketItemId}`, {
                     method: 'DELETE'
@@ -169,31 +215,68 @@ export const CartProvider = ({ children }) => {
         }
     };
 
+    // Создание заказа через API
+    const placeOrder = async (orderDetails) => {
+        setIsLoading(true);
+        setError(null);
+        try {
+            // Подготавливаем данные для API
+            const orderRequest = {
+                street: orderDetails.address,
+                city: orderDetails.city,
+                state: orderDetails.state || '', // если state может быть не обязательным
+                country: orderDetails.country,
+                zipCode: orderDetails.zipCode
+            };
+
+            const response = await fetch('http://localhost:5064/api/orders', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(orderRequest)
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to place order');
+            }
+
+            const orderData = await response.json();
+            
+            // Создаем объект заказа для локального состояния
+            const order = {
+                id: orderData.id || Date.now(), // Используем ID из API или временный
+                items: cartItems,
+                total: getCartTotal(),
+                ...orderDetails,
+                status: 'Processing',
+                orderDate: new Date().toISOString(),
+                estimatedDelivery: new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString(),
+            };
+
+            // Обновляем локальное состояние заказов
+            setOrders((prevOrders) => [order, ...prevOrders]);
+            
+            // Очищаем корзину после успешного оформления заказа
+            await clearCart();
+            
+            return order;
+            
+        } catch (err) {
+            setError(err.message);
+            console.error('Error placing order:', err);
+            throw err; // Пробрасываем ошибку дальше для обработки в компоненте
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     const getCartTotal = () => {
         return cartItems.reduce((total, item) => total + item.price * item.quantity, 0);
     };
 
     const getCartItemsCount = () => {
         return cartItems.reduce((count, item) => count + item.quantity, 0);
-    };
-
-    const placeOrder = (orderDetails) => {
-        const order = {
-            id: Date.now(),
-            items: cartItems,
-            total: getCartTotal(),
-            ...orderDetails,
-            status: 'Processing',
-            orderDate: new Date().toISOString(),
-            estimatedDelivery: new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString(),
-        };
-        setOrders((prevOrders) => {
-            const updatedOrders = [order, ...prevOrders];
-            localStorage.setItem('orders', JSON.stringify(updatedOrders));
-            return updatedOrders;
-        });
-        clearCart();
-        return order;
     };
 
     const value = {

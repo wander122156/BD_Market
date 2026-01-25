@@ -45,7 +45,6 @@ export default function Orders() {
         <div className="orders-list">
           {orders.map((order) => {
             const orderDate = new Date(order.orderDate).toLocaleString();
-            const deliveryDate = new Date(order.estimatedDelivery).toLocaleString();
             
             return (
               <div key={order.id} className="order-card">
@@ -62,7 +61,7 @@ export default function Orders() {
                 <div className="order-items-preview">
                   {order.items.slice(0, 3).map((item) => (
                     <div key={item.id} className="order-item-preview">
-                      <img src={item.image} alt={item.name} className="order-item-preview-image" />
+                      <img src={"http://localhost:5064" + item.pictureUrl} alt={item.name} className="order-item-preview-image" />
                       <div className="order-item-preview-info">
                         <h4>{item.name}</h4>
                         <p>Qty: {item.quantity}</p>
@@ -76,11 +75,6 @@ export default function Orders() {
 
                 <div className="order-footer">
                   <div className="order-delivery">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <circle cx="12" cy="12" r="10"></circle>
-                      <polyline points="12 6 12 12 16 14"></polyline>
-                    </svg>
-                    <span>Estimated delivery: {deliveryDate}</span>
                   </div>
                   <div className="order-total">
                     <strong>Total: ${order.total.toFixed(2)}</strong>

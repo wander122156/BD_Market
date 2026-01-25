@@ -5,9 +5,10 @@ import { useUser } from '../context/UserContext';
 import '../styles/Checkout.css';
 
 export default function Checkout() {
-  const { cartItems, getCartTotal, placeOrder } = useCart();
+  const { cartItems, getCartTotal, placeOrder, isLoading, error } = useCart();
   const { user, addresses, paymentMethods } = useUser();
   const navigate = useNavigate();
+  
   const [formData, setFormData] = useState({
     name: user?.name || '',
     email: user?.email || '',
@@ -25,6 +26,7 @@ export default function Checkout() {
   const [errors, setErrors] = useState({});
   const [useSavedAddress, setUseSavedAddress] = useState(false);
   const [useSavedPayment, setUseSavedPayment] = useState(false);
+  const [orderError, setOrderError] = useState(null);
 
   useEffect(() => {
     if (user) {
@@ -90,14 +92,17 @@ export default function Checkout() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setOrderError(null);
+    
     if (validateForm()) {
-      const order = placeOrder({
-        ...formData,
-        userId: user?.id
-      });
-      navigate(`/order-confirmation/${order.id}`);
+      try {
+        const order = await placeOrder(formData);
+        navigate(`/order-confirmation/${order.id}`);
+      } catch (err) {
+        setOrderError(err.message || 'Failed to place order. Please try again.');
+      }
     }
   };
 
@@ -105,6 +110,12 @@ export default function Checkout() {
     <div className="checkout">
       <div className="checkout-container">
         <h1 className="checkout-title">Checkout</h1>
+        
+        {orderError && (
+          <div className="error-alert">
+            {orderError}
+          </div>
+        )}
         
         <div className="checkout-content">
           <div className="checkout-form-section">
@@ -216,7 +227,7 @@ export default function Checkout() {
                   </div>
 
                   <div className="form-group">
-                    <label>State *</label>
+                    <label>State</label>
                     <input
                       type="text"
                       name="state"
@@ -321,8 +332,12 @@ export default function Checkout() {
                 )}
               </div>
 
-              <button type="submit" className="place-order-btn">
-                Place Order
+              <button 
+                type="submit" 
+                className="place-order-btn"
+                disabled={isLoading}
+              >
+                {isLoading ? 'Processing...' : 'Place Order'}
               </button>
             </form>
           </div>
@@ -331,8 +346,8 @@ export default function Checkout() {
             <h2>Order Summary</h2>
             <div className="order-items">
               {cartItems.map((item) => (
-                <div key={item.id} className="order-item">
-                  <img src={item.image} alt={item.name} className="order-item-image" />
+                <div key={item.catalogItemId} className="order-item">
+                  <img src={"http://localhost:5064" + item.pictureUrl} alt={item.name} className="order-item-image" />
                   <div className="order-item-info">
                     <h4>{item.name}</h4>
                     <p>Qty: {item.quantity}</p>

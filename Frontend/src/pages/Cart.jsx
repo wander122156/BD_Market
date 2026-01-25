@@ -62,7 +62,7 @@ export default function Cart() {
                   <div key={item.basketItemId} className="cart-item">
                     {/* Изменено: item.image → item.pictureUrl */}
                     <img
-                        src={item.pictureUrl || '/placeholder.jpg'}
+                        src={"http://localhost:5064" + item.pictureUrl}
                         alt={item.name}
                         className="cart-item-image"
                     />
