@@ -67,6 +67,9 @@
       <Compile Update="OrderEndpoints\CreateOrderEndpoint.CreateOrderResponse.cs">
         <DependentUpon>CreateOrderEndpoint.cs</DependentUpon>
       </Compile>
+      <Compile Update="OrderEndpoints\ListOrdersEndpoint.ListOrdersResponse.cs">
+        <DependentUpon>ListOrdersEndpoint.cs</DependentUpon>
+      </Compile>
     </ItemGroup>
 
 </Project>
